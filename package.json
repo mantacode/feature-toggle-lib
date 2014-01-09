@@ -1,0 +1,13 @@
+{
+  "name": "feature-toggle-lib",
+  "main": "./lib/ftoggle.js",
+  "devDependencies": {
+    "coffee-script": "~1.6.3",
+    "grunt": "~0.4.1",
+    "covet": "~0.0.3",
+    "grunt-jasmine-bundle": ">= 0.0.3",
+    "grunt-cli": "~0.1.9",
+    "grunt-contrib-jshint": "~0.6.4",
+    "sandboxed-module": "~0.3.0"
+  }
+}
