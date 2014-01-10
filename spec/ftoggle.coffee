@@ -52,3 +52,27 @@ describe 'achieves correct traffic allocation', ->
   And  -> @req.ftoggle.isFeatureEnabled('feat1.subfeat1') == true
   And  -> @req.ftoggle.isFeatureEnabled('feat1.subfeat2') == false
 
+describe 'percentage traffic works', ->
+  Given ->
+    @ftoggleParent = requireSubject('lib/ftoggle').makeFtoggle()
+    @ftoggleParent.setConfig(sampleConfig1)
+    @ftoggle = @ftoggleParent.newMiddleware()
+  When ->
+    @req = {}
+    @ftoggleParent.roll = ->  0.4 ;
+    @ftoggle(@req, {}, -> )
+  Then ->
+    @req.ftoggle.isFeatureEnabled('feat2') == true
+
+describe 'percentage traffic works (2)', ->
+  Given ->
+    @ftoggleParent = requireSubject('lib/ftoggle').makeFtoggle()
+    @ftoggleParent.setConfig(sampleConfig1)
+    @ftoggle = @ftoggleParent.newMiddleware()
+  When ->
+    @req = {}
+    @ftoggleParent.roll = -> 0.6 ;
+    @ftoggle(@req, {}, -> )
+  Then ->
+    @req.ftoggle.isFeatureEnabled('feat2') == false
+
