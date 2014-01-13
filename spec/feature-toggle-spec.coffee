@@ -1,13 +1,16 @@
-describe "ftoggle", ->
-  Given -> @subject = requireSubject('lib/ftoggle').makeFtoggle()
+describe "FeatureToggle", ->
+  Given -> @math = random: jasmine.createSpy("random").andReturn(0.3)
+
+  Given -> @subject = new (requireSubject 'lib/feature-toggle',
+    './math': @math
+  )
   Given -> @middleware = @subject.newMiddleware()
   Given -> @res = new FakeHttpResponse()
   Given -> @req = new FakeHttpRequest()
   When -> @middleware(@req, @res, ->)
 
   describe "req.ftoggle.isFeatureEnabled", ->
-    Given -> spyOn(@subject, 'roll').andReturn(0.3)
-    
+
     context "enabled parent, enabled child", ->
       Given -> @subject.setConfig
         features:
@@ -17,7 +20,7 @@ describe "ftoggle", ->
               bar:
                 traffic: 0.5
       Then -> @req.ftoggle.isFeatureEnabled('foo.bar') == true
-    
+
     context "enabled parent, disabled child", ->
       Given -> @subject.setConfig
         features:
@@ -37,7 +40,7 @@ describe "ftoggle", ->
               bar:
                 traffic: 0.8
       Then -> @req.ftoggle.isFeatureEnabled('foo.bar') == false
- 
+
     context "cookie previously set", ->
       Given -> @subject.setConfig
         name: "foo"
@@ -68,9 +71,9 @@ describe "ftoggle", ->
           name: "foo"
           features:
             bar:
-              traffic: 0 
+              traffic: 0
         Given -> @req.params['ftoggle-foo-on'] = 'bar'
-        Then -> @req.ftoggle.isFeatureEnabled('bar') == true 
+        Then -> @req.ftoggle.isFeatureEnabled('bar') == true
       context "turns off", ->
         Given -> @subject.setConfig
           name: "foo"
@@ -80,7 +83,7 @@ describe "ftoggle", ->
         Given -> @req.params['ftoggle-foo-off'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
 
-      #context "ignores unknown", ->  
+      #context "ignores unknown", ->
 
   describe "middleware sets cookie", ->
     Given -> @subject.setConfig
