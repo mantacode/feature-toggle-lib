@@ -49,7 +49,19 @@ describe "ftoggle", ->
          enabled: false
       Then -> @req.ftoggle.isFeatureEnabled('foo') == false
 
-    
+    context "cookie previously set with old version", ->
+      Given -> @subject.setConfig
+        version: 3
+        name: "foo"
+        features:
+         foo:
+           traffic: 0.6
+      Given -> @req.cookies['ftoggle-foo'] =
+        version: 2
+        foo:
+         enabled: false
+      Then -> @req.ftoggle.isFeatureEnabled('foo') == true
+   
 
   describe "middleware sets cookie", ->
     Given -> @subject.setConfig
