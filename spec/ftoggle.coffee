@@ -61,7 +61,26 @@ describe "ftoggle", ->
         foo:
          enabled: false
       Then -> @req.ftoggle.isFeatureEnabled('foo') == true
-   
+
+    describe "middleware uses query parameters", ->
+      context "turns on", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 0 
+        Given -> @req.params['ftoggle-foo-on'] = 'bar'
+        Then -> @req.ftoggle.isFeatureEnabled('bar') == true 
+      context "turns off", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 1
+        Given -> @req.params['ftoggle-foo-off'] = 'bar'
+        Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+
+      #context "ignores unknown", ->  
 
   describe "middleware sets cookie", ->
     Given -> @subject.setConfig
@@ -73,3 +92,5 @@ describe "ftoggle", ->
     Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
       enabled: true
     And -> @res.cookies['ftoggle-foo'].version == 2
+
+
