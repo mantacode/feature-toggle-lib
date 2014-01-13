@@ -1,78 +1,63 @@
-sampleConfig1 =
-  version: 1
-  features:
-    feat1:
-      traffic: 1
+describe "ftoggle", ->
+  Given -> @subject = requireSubject('lib/ftoggle').makeFtoggle()
+  Given -> @middleware = @subject.newMiddleware()
+  Given -> @res = new FakeHttpResponse()
+  Given -> @req = new FakeHttpRequest()
+  When -> @middleware(@req, @res, ->)
+
+  describe "req.ftoggle.isFeatureEnabled", ->
+    Given -> spyOn(@subject, 'roll').andReturn(0.3)
+    
+    context "enabled parent, enabled child", ->
+      Given -> @subject.setConfig
+        features:
+          foo:
+            traffic: 0.4
+            features:
+              bar:
+                traffic: 0.5
+      Then -> @req.ftoggle.isFeatureEnabled('foo.bar') == true
+    
+    context "enabled parent, disabled child", ->
+      Given -> @subject.setConfig
+        features:
+          foo:
+            traffic: 0.4
+            features:
+              bar:
+                traffic: 0.2
+      Then -> @req.ftoggle.isFeatureEnabled('foo.bar') == false
+
+    context "disabled parent, enabled child", ->
+      Given -> @subject.setConfig
+        features:
+          foo:
+            traffic: 0.2
+            features:
+              bar:
+                traffic: 0.8
+      Then -> @req.ftoggle.isFeatureEnabled('foo.bar') == false
+ 
+    context "cookie previously set", ->
+      Given -> @subject.setConfig
+        name: "foo"
+        features:
+         foo:
+           traffic: 0.6
+      Given -> @req.cookies['ftoggle-foo'] =
+        foo:
+         enabled: false
+      Then -> @req.ftoggle.isFeatureEnabled('foo') == false
+
+    
+
+  describe "middleware sets cookie", ->
+    Given -> @subject.setConfig
+      name: "foo"
+      version: 2
       features:
-        subfeat1:
-          traffic: 1 
-        subfeat2:
-          traffic: 0 
-    feat2:
-      traffic: .5
-    feat3:
-      traffic: 0
-    feat4:
-      traffic: 1
-      
-
-describe 'can instantiate middleware function', ->
-  Given -> @ftoggleLib = requireSubject 'lib/ftoggle'
-  When  -> @ftoggle = @ftoggleLib.makeFtoggle().newMiddleware()
-  Then  -> expect(typeof @ftoggle).toBe 'function'
-
-describe 'adds a formally correct ftoggle bundle to the request', ->
-  Given ->
-    @ftoggleLib = requireSubject 'lib/ftoggle'
-    @ftoggleParent = @ftoggleLib.makeFtoggle();
-    @ftoggle = @ftoggleParent.newMiddleware()
-  When ->
-    @req = {}
-    @res = {}
-    @next = -> # will need to do this async at some point...
-    @ftoggle(@req, @res, @next)
-  Then -> expect(typeof @req.ftoggle).toBe 'object'
-  And  -> expect(typeof @req.ftoggle.isFeatureEnabled).toBe 'function'
-  And  -> expect(typeof @ftoggleParent.getConfig).toBe 'function'
-  And  -> expect(typeof @ftoggleParent.setConfig).toBe 'function'
-
-describe 'achieves correct traffic allocation', ->
-  Given ->
-    @ftoggleLib = requireSubject 'lib/ftoggle'
-    @ftoggleParent = @ftoggleLib.makeFtoggle();
-    @ftoggleParent.setConfig(sampleConfig1)
-    @ftoggle = @ftoggleParent.newMiddleware()
-    @res = {}
-    @next = -> # will need to do this async at some point...
-  When ->
-    @req = {}
-    @ftoggle(@req, @res, @next)
-  Then -> @req.ftoggle.isFeatureEnabled('feat4') == true
-  And  -> @req.ftoggle.isFeatureEnabled('feat3') == false
-  And  -> @req.ftoggle.isFeatureEnabled('feat1.subfeat1') == true
-  And  -> @req.ftoggle.isFeatureEnabled('feat1.subfeat2') == false
-
-describe 'percentage traffic works', ->
-  Given ->
-    @ftoggleParent = requireSubject('lib/ftoggle').makeFtoggle()
-    @ftoggleParent.setConfig(sampleConfig1)
-    @ftoggle = @ftoggleParent.newMiddleware()
-  When ->
-    @req = {}
-    @ftoggleParent.roll = ->  0.4 ;
-    @ftoggle(@req, {}, -> )
-  Then ->
-    @req.ftoggle.isFeatureEnabled('feat2') == true
-
-describe 'percentage traffic works (2)', ->
-  Given ->
-    @ftoggleParent = requireSubject('lib/ftoggle').makeFtoggle()
-    @ftoggleParent.setConfig(sampleConfig1)
-    @ftoggle = @ftoggleParent.newMiddleware()
-  When ->
-    @req = {}
-    @ftoggleParent.roll = -> 0.6 ;
-    @ftoggle(@req, {}, -> )
-  Then ->
-    @req.ftoggle.isFeatureEnabled('feat2') == false
-
+        foo:
+          traffic: 1
+    Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
+      enabled: true
+    And -> @res.cookies['ftoggle-foo'].version == 2
