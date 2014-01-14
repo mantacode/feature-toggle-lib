@@ -72,8 +72,14 @@ describe "FeatureToggle", ->
           features:
             bar:
               traffic: 0
-        Given -> @req.params['ftoggle-foo-on'] = 'bar'
-        Then -> @req.ftoggle.isFeatureEnabled('bar') == true
+              features:
+                baz:
+                  traffic: 0
+            second:
+              traffic: 0
+        Given -> @req.params['ftoggle-foo-on'] = 'bar.baz,second'
+        Then -> @req.ftoggle.isFeatureEnabled('bar.baz') == true
+        And -> @req.ftoggle.isFeatureEnabled('second') == true
       context "turns off", ->
         Given -> @subject.setConfig
           name: "foo"

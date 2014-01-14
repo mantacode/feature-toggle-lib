@@ -3,14 +3,17 @@ module.exports = class OverridesToggleConfig
 
   override: (overrides, enable) ->
     return this unless overrides?
-    @applyToggles(overrides.split(","), @config, enable)
+    console.log "before", @config
+    overrides.split(",").forEach (v) =>
+      @applyToggles(v.split("."), @config, enable)
+    console.log "after", @config
     this
 
   #private
   applyToggles: (parts, data, val) ->
     thisPart = parts.shift()
-    if data[thisPart]
-      if parts.length < 1
-        data[thisPart].enabled = val
-      else
-        @applyToggles(parts, data[thisPart], val)
+    unless data[thisPart]?
+      data[thisPart] = { enabled: val }
+    data[thisPart].enabled = val
+    if parts.length > 0 
+      @applyToggles(parts, data[thisPart], val)
