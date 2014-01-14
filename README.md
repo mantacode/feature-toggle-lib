@@ -65,4 +65,3 @@ http://foo.bar.com/?ftoggle-$configname-on=f1,f2,f3&ftoggle-$configname-off=f4,f
 ## TODO
 
  * Fetcher/updater for config data. Will fetch remotely, poll periodically, update config without client intervention.
- * Make overrides work for nested edge cases.
