@@ -4,6 +4,7 @@
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-jasmine-bundle": ">= 0.1.4",
+    "express": "~3.0.0",
     "sandboxed-module": "~0.3.0"
   },
   "dependencies": {
