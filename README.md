@@ -8,7 +8,8 @@ ftoggle is implemented as Express middleware. Toggles are nestable (this is more
 
 ```
 var config = {
-  version: 1
+  version: 1,
+  name: "somelabel",
   features: {
     feature_1: {
       traffic: 0.5
@@ -58,7 +59,7 @@ req.ftoggole.isFeatureEnabled('feature_1', yesFunction, noFunction);
 You can opt into or out of features with a query parameter:
 
 ```
-http://foo.bar.com/?ftoggle_$feature_on=f1,f2,f3&ftoggle_feature_off=f4,f5,f6
+http://foo.bar.com/?ftoggle-$configname-on=f1,f2,f3&ftoggle-$configname-off=f4,f5,f6
 ```
 
 ## TODO
