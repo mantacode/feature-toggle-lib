@@ -3,10 +3,8 @@ module.exports = class OverridesToggleConfig
 
   override: (overrides, enable) ->
     return this unless overrides?
-    console.log "before", @config
     overrides.split(",").forEach (v) =>
       @applyToggles(v.split("."), @config, enable)
-    console.log "after", @config
     this
 
   #private
