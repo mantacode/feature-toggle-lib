@@ -27,7 +27,8 @@ var config = {
   }
 };
 
-var ftoggle = require('ftoggle').makeFtoggle();
+var FeatureToggle = require('ftoggle');
+var ftoggle = new FeatureToggle();
 ftoggle.setConfig(config);
 
 // ...
@@ -48,11 +49,19 @@ For hierarchical/nested feature toggles:
 if (req.ftoggle.isFeatureEnabled('feature_2.subfeature_2_1')) { ...
 ```
 
+If you want to dispatch to some callbacks:
+
+```
+req.ftoggole.isFeatureEnabled('feature_1', yesFunction, noFunction);
+```
+
+You can opt into or out of features with a query parameter:
+
+```
+http://foo.bar.com/?ftoggle_$feature_on=f1,f2,f3&ftoggle_feature_off=f4,f5,f6
+```
+
 ## TODO
 
  * Fetcher/updater for config data. Will fetch remotely, poll periodically, update config without client intervention.
- * Persistence via cookies
- * Pass-through via headers
- * Override via cookies
- * Override via headers
-
+ * Make overrides work for nested edge cases.
