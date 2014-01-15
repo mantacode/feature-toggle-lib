@@ -92,6 +92,13 @@ describe "FeatureToggle", ->
       #context "ignores unknown", ->
       #
   describe "#findEnabledChildren", ->
+    context "returns empty list for no results", ->
+      Given -> @subject.setConfig
+        features:
+          a:
+            traffic: 0
+      Then -> @req.ftoggle.findEnabledChildren().length == 0
+
     context "top level (no prefix)", ->
       Given -> @subject.setConfig
         features:

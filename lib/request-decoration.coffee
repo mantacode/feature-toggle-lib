@@ -15,9 +15,10 @@ module.exports = class RequestDecoration
     p = []
     p = prefix.split(".") if prefix?
     feature = @lookupFeature(p, @config)
-    return null unless feature
+    return [] unless feature
     children = _.filter Object.keys(feature), (k) ->
       feature[k].enabled == true
+    if children? then children else []
 
   #private
 
