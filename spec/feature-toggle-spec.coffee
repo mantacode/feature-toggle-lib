@@ -90,6 +90,51 @@ describe "FeatureToggle", ->
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
 
       #context "ignores unknown", ->
+      #
+  describe "#findEnabledChildren", ->
+    context "top level (no prefix)", ->
+      Given -> @subject.setConfig
+        features:
+          a:
+            traffic: 1
+          b:
+            traffic: 0
+      Then -> @req.ftoggle.findEnabledChildren().length == 1
+      And -> @req.ftoggle.findEnabledChildren()[0] == 'a'
+    context "second level (prefix)", ->
+      Given -> @subject.setConfig
+        features:
+          a:
+            traffic: 1
+            features:
+              c:
+                traffic: 1
+              d:
+                traffic: 1
+      Then -> @req.ftoggle.findEnabledChildren('a').length == 2
+
+  describe "exclusive split", ->
+    context "always return 1", ->
+      Given -> @subject.setConfig
+        exclusiveSplit: true
+        features:
+          a:
+            traffic: 0.9
+          b:
+            traffic: 0.9
+      Then ->
+        @req.ftoggle.findEnabledChildren().length == 1
+
+    context "return the correct one", ->
+      Given -> @subject.setConfig
+        exclusiveSplit: true
+        features:
+          a:
+            traffic: 0.2
+          b:
+            traffic: 0.8
+      Then ->
+        @req.ftoggle.findEnabledChildren()[0] == 'b'
 
   describe "middleware sets cookie", ->
     Given -> @subject.setConfig
