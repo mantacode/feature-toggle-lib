@@ -1,2 +1,2 @@
 require("coffee-script")
-module.exports = require("lib/feature-toggle")
+module.exports = require("./lib/feature-toggle")
