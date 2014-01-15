@@ -19,6 +19,7 @@ module.exports = class FeatureToggle
 
   setConfig: (newConfig) ->
     @toggleConfig = newConfig
+    this
 
   #private
 
