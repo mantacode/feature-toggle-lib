@@ -89,8 +89,35 @@ describe "FeatureToggle", ->
         Given -> @req.params['ftoggle-foo-off'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
 
-      #context "ignores unknown", ->
-      #
+      context "honors exclusiveSplit", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          exclusiveSplit: true
+          features:
+            bar:
+              traffic: .5
+            baz:
+              traffic: .5
+        context "turn on", ->
+          Given -> @req.params['ftoggle-foo-on'] = 'baz'
+          Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+        context "turn off", ->
+          Given -> @req.params['ftoggle-foo-off'] = 'bar'
+          Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+          And -> @req.ftoggle.isFeatureEnabled('baz') == false
+
+      context "applyToggles doesn't murder non-exclusive features", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 1
+            baz:
+              traffic: 1
+        Given -> @req.params['ftoggle-foo-on'] = 'bar'
+        Then -> @req.ftoggle.isFeatureEnabled('bar') == true
+        Then -> @req.ftoggle.isFeatureEnabled('baz') == true
+
   describe "#findEnabledChildren", ->
     context "returns empty list for no results", ->
       Given -> @subject.setConfig
