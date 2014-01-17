@@ -1,7 +1,7 @@
 {
   "name": "feature-toggle-lib",
   "main": "./main.js",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-jasmine-bundle": ">= 0.1.4",
