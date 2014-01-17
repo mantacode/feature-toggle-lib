@@ -26,7 +26,7 @@ module.exports = class FeatureToggle
   toggleName: -> "ftoggle-#{@toggleConfig.name}"
 
   overrideByQueryParam: (userConfig, req) ->
-    new OverridesToggleConfig(userConfig).
+    new OverridesToggleConfig(@toggleConfig, userConfig).
       override(req.param("#{@toggleName()}-on"), true).
       override(req.param("#{@toggleName()}-off"), false)
 

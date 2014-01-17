@@ -5,19 +5,20 @@ module.exports = class OverridesToggleConfig
     return this unless overrides?
     console.log "GO\n\n"
     overrides.split(",").forEach (v) =>
-      @applyToggles(v.split("."), @userConfig, enable)
+      @applyToggles(v.split("."), @config, @userConfig, enable)
     this
 
   #private
-  applyToggles: (parts, data, val) ->
+  applyToggles: (parts, config, data, val) ->
     console.log "before", data
     thisPart = parts.shift()
     unless data[thisPart]?
       data[thisPart] = { enabled: val }
     data[thisPart].enabled = val
-    Object.keys(data).forEach (k) ->
-      if typeof data[k] == 'object' && data[k].enabled?
-        data[k].enabled = !val unless k == thisPart
+    if config? && config.exclusiveSplit
+      Object.keys(data).forEach (k) ->
+        if typeof data[k] == 'object' && data[k].enabled?
+          data[k].enabled = !val unless k == thisPart
     if parts.length > 0 
-      @applyToggles(parts, data[thisPart], val)
+      @applyToggles(parts, config.features[thisPart], data[thisPart], val)
     console.log "after ", data
