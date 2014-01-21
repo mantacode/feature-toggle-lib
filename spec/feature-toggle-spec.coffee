@@ -9,6 +9,14 @@ describe "FeatureToggle", ->
   Given -> @req = new FakeHttpRequest()
   When -> @middleware(@req, @res, ->)
 
+  describe "req.ftoggle.getFeatures", ->
+    Given -> @subject.setConfig
+      version: 1
+      features:
+        foo:
+          traffic: 1
+    Then -> expect(@req.ftoggle.getFeatures()).toEqual({version:1,enabled: true, foo:{enabled: true}});
+
   describe "req.ftoggle.isFeatureEnabled", ->
 
     context "enabled parent, enabled child", ->

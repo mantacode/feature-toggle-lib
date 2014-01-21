@@ -20,6 +20,9 @@ module.exports = class RequestDecoration
       feature[k].enabled == true
     if children? then children else []
 
+  getFeatures: () ->
+    @config
+
   #private
 
   lookupFeature: (path, nodes) ->
