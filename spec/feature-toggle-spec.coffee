@@ -29,6 +29,13 @@ describe "FeatureToggle", ->
                 traffic: 0.5
       Then -> @req.ftoggle.isFeatureEnabled('foo.bar') == true
 
+    context "missing feature, should return ???", ->
+      Given -> @subject.setConfig
+        features:
+          foo:
+            traffic: 0
+      Then -> @req.ftoggle.isFeatureEnabled('bar.baz') == false
+
     context "enabled parent, disabled child", ->
       Given -> @subject.setConfig
         features:
