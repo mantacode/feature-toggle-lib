@@ -1,5 +1,3 @@
-_ = require('underscore')
-
 module.exports = class RequestDecoration
   constructor: (@config) ->
 
@@ -16,7 +14,7 @@ module.exports = class RequestDecoration
     p = prefix.split(".") if prefix?
     feature = @lookupFeature(p, @config)
     return [] unless feature
-    children = _.filter Object.keys(feature), (k) ->
+    children = @filter Object.keys(feature), (k) ->
       feature[k].enabled == true
     if children? then children else []
 
@@ -32,8 +30,10 @@ module.exports = class RequestDecoration
     else
       nodes
 
-  lookuppFeature: (path, nodes) ->
-    parent = path.shift()
-    return false unless nodes[parent]?.enabled
-    return true unless path.length > 0
-    @lookupFeature(path, nodes[parent])
+  # not using underscore here, for front-end reasons
+  filter: (list, f) ->
+    out = []
+    list.forEach (e) ->
+      if f(e)
+        out.push e
+    return out
