@@ -1,0 +1,10 @@
+{
+  "name": "feature-toggle-lib",
+  "version": "0.1.0",
+  "homepage": "https://github.com/mantacode/feature-toggle-lib",
+  "authors": {
+    "company": "Manta Media"
+  },
+  "description": "ftoggle",
+  "private": true
+}
