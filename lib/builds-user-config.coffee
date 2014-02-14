@@ -9,7 +9,7 @@ module.exports = class BuildsUserConfig
       userConfig.enabled = (if config.traffic? then @math.random() <= config.traffic else true)
       userConfig.enabled = true if pass
       userConfig.version = config.version if config.version?
-      if userConfig.enabled && config.features?
+      if config.features?
         if config.exclusiveSplit
           pick = @exclusiveSplit(config.features)
           userConfig[pick] = @build(config.features[pick], true)

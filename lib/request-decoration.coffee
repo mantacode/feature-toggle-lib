@@ -2,8 +2,8 @@ module.exports = class RequestDecoration
   constructor: (@config) ->
 
   isFeatureEnabled: (feature, trueCallback, falseCallback) ->
-    featureNodes = @lookupFeature(feature.split("."), @config)
-    if enabled = featureNodes? && featureNodes.enabled
+    featureNodes = @lookupFeature(feature.split("."), @objClone(@config))
+    if enabled = (featureNodes? && featureNodes.enabled)
       trueCallback?(feature)
     else
       falseCallback?(feature)
@@ -18,15 +18,21 @@ module.exports = class RequestDecoration
       feature[k].enabled == true
     if children? then children else []
 
+  doesFeatureExist: (feature) ->
+    nodes = @lookupFeature(feature.split("."), @config)
+    return nodes?
+
   getFeatures: () ->
     @config
 
   #private
 
-  lookupFeature: (path, nodes) ->
+  lookupFeature: (path, nodes, over = null) ->
     current = path.shift()
+    nodes.enabled = over if over?
     if current? && nodes?
-        @lookupFeature(path, nodes[current])
+      over = false if nodes.enabled? && nodes.enabled == false
+      @lookupFeature(path, nodes[current], over)
     else
       nodes
 
@@ -37,3 +43,12 @@ module.exports = class RequestDecoration
       if f(e)
         out.push e
     return out
+
+  # same story; limiting dependencies
+  objClone: (o) ->
+    if typeof o == 'object'
+      out = {}
+      out[k] = @objClone(v) for k, v of o
+      return out
+    else
+      return o

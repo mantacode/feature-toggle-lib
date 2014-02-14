@@ -17,6 +17,15 @@ describe "FeatureToggle", ->
           traffic: 1
     Then -> expect(@req.ftoggle.getFeatures()).toEqual({version:1,enabled: true, foo:{enabled: true}});
 
+  describe "req.ftoggle.doesFeatureExist", ->
+    Given -> @subject.setConfig
+      version: 1
+      features:
+        fool:
+          traffic: 0
+    Then -> @req.ftoggle.doesFeatureExist('fool') == true
+    And -> @req.ftoggle.doesFeatureExist('bar') == false
+
   describe "req.ftoggle.isFeatureEnabled", ->
 
     context "enabled parent, enabled child", ->
@@ -52,9 +61,9 @@ describe "FeatureToggle", ->
           foo:
             traffic: 0.2
             features:
-              bar:
+              barl:
                 traffic: 0.8
-      Then -> @req.ftoggle.isFeatureEnabled('foo.bar') == false
+      Then -> @req.ftoggle.isFeatureEnabled('foo.barl') == false
 
     context "cookie previously set", ->
       Given -> @subject.setConfig
