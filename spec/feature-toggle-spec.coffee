@@ -204,5 +204,24 @@ describe "FeatureToggle", ->
     Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
       enabled: true
     And -> @res.cookies['ftoggle-foo'].version == 2
+    And -> expect(@res.cookies['ftoggle-foo--options']).toEqual(null)
 
+    context "with cookie options", ->
+      Given -> @subject.setConfig
+        name: "foo"
+        version: 2
+        features:
+          foo:
+            traffic: 1
+        cookieOptions:
+          domain: 'my.domain.com'
+          expires: 'my expires'
+          madeUpOption: 'this is fake'
+      Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
+        enabled: true
+      And -> @res.cookies['ftoggle-foo'].version == 2
+      And -> expect(@res.cookies['ftoggle-foo--options']).toEqual
+        domain: 'my.domain.com'
+        expires: 'my expires'
+        madeUpOption: 'this is fake'
 
