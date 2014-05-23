@@ -12,6 +12,7 @@ module.exports = class FeatureToggle
   newMiddleware: ->
     (req, res, next) =>
       userConfig = @createUserConfig(req.cookies[@toggleName()])
+      @overrideByHeader(userConfig, req)
       @overrideByQueryParam(userConfig, req)
       req.ftoggle = new RequestDecoration(userConfig)
       cookieOptions = @toggleConfig.cookieOptions
@@ -31,6 +32,10 @@ module.exports = class FeatureToggle
       override(req.param("#{@toggleName()}-on"), true).
       override(req.param("#{@toggleName()}-off"), false)
 
+  overrideByHeader: (userConfig, req) ->
+    new OverridesToggleConfig(@toggleConfig, userConfig).
+      override(req.headers["x-#{@toggleName()}-on"], true).
+      override(req.headers["x-#{@toggleName()}-off"], false)
 
   createUserConfig: (cookie) ->
     return cookie if @cookieIsCurrent(cookie)
