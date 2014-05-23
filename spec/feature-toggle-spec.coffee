@@ -112,7 +112,7 @@ describe "FeatureToggle", ->
               traffic: 1
         Given -> @req.params['ftoggle-foo-off'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
-    
+
       context "honors exclusiveSplit", ->
         Given -> @subject.setConfig
           name: "foo"
