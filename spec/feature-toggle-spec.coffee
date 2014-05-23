@@ -112,7 +112,7 @@ describe "FeatureToggle", ->
               traffic: 1
         Given -> @req.params['ftoggle-foo-off'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
-
+    
       context "honors exclusiveSplit", ->
         Given -> @subject.setConfig
           name: "foo"
@@ -142,6 +142,45 @@ describe "FeatureToggle", ->
         Then -> @req.ftoggle.isFeatureEnabled('bar') == true
         Then -> @req.ftoggle.isFeatureEnabled('baz') == true
 
+    describe "header toggles feature", ->
+      context "turns on", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 0
+              features:
+                baz:
+                  traffic: 0
+            second:
+              traffic: 0
+        Given -> @req.headers['x-ftoggle-foo-on'] = 'bar.baz,second'
+        Then -> @req.ftoggle.isFeatureEnabled('bar.baz') == true
+        And -> @req.ftoggle.isFeatureEnabled('second') == true
+      context "turns off", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 1
+        Given -> @req.headers['x-ftoggle-foo-off'] = 'bar'
+        Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+      context "overridden by query parameter", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 0
+              features:
+                baz:
+                  traffic: 0
+            second:
+              traffic: 0
+        Given -> @req.headers['x-ftoggle-foo-on'] = 'bar.baz,second'
+        Given -> @req.params['ftoggle-foo-off'] = 'bar'
+        Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+
+  
   describe "#findEnabledChildren", ->
     context "returns empty list for no results", ->
       Given -> @subject.setConfig
