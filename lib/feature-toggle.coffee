@@ -11,11 +11,14 @@ module.exports = class FeatureToggle
 
   newMiddleware: ->
     (req, res, next) =>
+      defaults = @getDefaults(req)
       userConfig = @createUserConfig(req.cookies[@toggleName()])
       @overrideByHeader(userConfig, req)
       @overrideByQueryParam(userConfig, req)
       req.ftoggle = new RequestDecoration(userConfig)
-      cookieOptions = @toggleConfig.cookieOptions
+      cookieOptions = @toggleConfig.cookieOptions || {}
+      for k, v of defaults
+        cookieOptions[k] = cookieOptions[k] or v
       res.cookie(@toggleName(), userConfig, cookieOptions)
       next()
 
@@ -46,3 +49,12 @@ module.exports = class FeatureToggle
     return true unless @toggleConfig.version?
     cookie.version == @toggleConfig.version
 
+  getDefaults: (req) ->
+    parts = req.get('host').split(':')[0].split('.')
+    if parts.length > 2
+      parts[0] = ''
+    defaults =
+      domain: parts.join('.')
+      path: '/'
+      maxAge: 63072000000
+    return defaults

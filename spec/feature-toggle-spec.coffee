@@ -7,6 +7,7 @@ describe "FeatureToggle", ->
   Given -> @middleware = @subject.newMiddleware()
   Given -> @res = new FakeHttpResponse()
   Given -> @req = new FakeHttpRequest()
+  Given -> @req.get = jasmine.createSpy('get').andReturn 'foo.bar.com'
   When -> @middleware(@req, @res, ->)
 
   describe "req.ftoggle.getFeatures", ->
@@ -243,7 +244,6 @@ describe "FeatureToggle", ->
     Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
       enabled: true
     And -> @res.cookies['ftoggle-foo'].version == 2
-    And -> expect(@res.cookies['ftoggle-foo--options']).toEqual(null)
 
     context "with cookie options", ->
       Given -> @subject.setConfig
@@ -263,4 +263,21 @@ describe "FeatureToggle", ->
         domain: 'my.domain.com'
         expires: 'my expires'
         madeUpOption: 'this is fake'
+        maxAge: 63072000000
+        path: '/'
 
+    context 'with defaults', ->
+      Given -> @subject.setConfig
+        name: "foo"
+        version: 2
+        features:
+          foo:
+            traffic: 1
+        cookieOptions: {}
+      Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
+        enabled: true
+      And -> @res.cookies['ftoggle-foo'].version == 2
+      And -> expect(@res.cookies['ftoggle-foo--options']).toEqual
+        domain: '.bar.com'
+        maxAge: 63072000000
+        path: '/'
