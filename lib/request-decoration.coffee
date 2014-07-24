@@ -1,5 +1,5 @@
 module.exports = class RequestDecoration
-  constructor: (@config) ->
+  constructor: (@config, @featureVals) ->
 
   isFeatureEnabled: (feature, trueCallback, falseCallback) ->
     featureNodes = @lookupFeature(feature.split("."), @objClone(@config))
@@ -24,6 +24,13 @@ module.exports = class RequestDecoration
 
   getFeatures: () ->
     @config
+
+
+  featureVal: (key) ->
+    if @featureVals[key]? then @featureVals[key] else null
+
+  getFeatureVals: () ->
+    @featureVals
 
   #private
 
