@@ -7,6 +7,7 @@ describe "FeatureToggle", ->
   Given -> @middleware = @subject.newMiddleware()
   Given -> @res = new FakeHttpResponse()
   Given -> @req = new FakeHttpRequest()
+  Given -> @req.get = jasmine.createSpy('get').andReturn 'foo.bar.com'
   When -> @middleware(@req, @res, ->)
 
   describe "req.ftoggle.getFeatures", ->
@@ -158,6 +159,45 @@ describe "FeatureToggle", ->
         Then -> @req.ftoggle.isFeatureEnabled('bar') == true
         Then -> @req.ftoggle.isFeatureEnabled('baz') == true
 
+    describe "header toggles feature", ->
+      context "turns on", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 0
+              features:
+                baz:
+                  traffic: 0
+            second:
+              traffic: 0
+        Given -> @req.headers['x-ftoggle-foo-on'] = 'bar.baz,second'
+        Then -> @req.ftoggle.isFeatureEnabled('bar.baz') == true
+        And -> @req.ftoggle.isFeatureEnabled('second') == true
+      context "turns off", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 1
+        Given -> @req.headers['x-ftoggle-foo-off'] = 'bar'
+        Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+      context "overridden by query parameter", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 0
+              features:
+                baz:
+                  traffic: 0
+            second:
+              traffic: 0
+        Given -> @req.headers['x-ftoggle-foo-on'] = 'bar.baz,second'
+        Given -> @req.params['ftoggle-foo-off'] = 'bar'
+        Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+
+  
   describe "#findEnabledChildren", ->
     context "returns empty list for no results", ->
       Given -> @subject.setConfig
@@ -221,4 +261,39 @@ describe "FeatureToggle", ->
       enabled: true
     And -> @res.cookies['ftoggle-foo'].version == 2
 
+    context "with cookie options", ->
+      Given -> @subject.setConfig
+        name: "foo"
+        version: 2
+        features:
+          foo:
+            traffic: 1
+        cookieOptions:
+          domain: 'my.domain.com'
+          expires: 'my expires'
+          madeUpOption: 'this is fake'
+      Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
+        enabled: true
+      And -> @res.cookies['ftoggle-foo'].version == 2
+      And -> expect(@res.cookies['ftoggle-foo--options']).toEqual
+        domain: 'my.domain.com'
+        expires: 'my expires'
+        madeUpOption: 'this is fake'
+        maxAge: 63072000000
+        path: '/'
 
+    context 'with defaults', ->
+      Given -> @subject.setConfig
+        name: "foo"
+        version: 2
+        features:
+          foo:
+            traffic: 1
+        cookieOptions: {}
+      Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
+        enabled: true
+      And -> @res.cookies['ftoggle-foo'].version == 2
+      And -> expect(@res.cookies['ftoggle-foo--options']).toEqual
+        domain: '.bar.com'
+        maxAge: 63072000000
+        path: '/'

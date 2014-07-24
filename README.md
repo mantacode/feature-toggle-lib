@@ -62,6 +62,10 @@ You can opt into or out of features with a query parameter:
 http://foo.bar.com/?ftoggle-$configname-on=f1,f2,f3&ftoggle-$configname-off=f4,f5,f6
 ```
 
+## Client/Browser Usage
+
+manta-frontend does some magic to use the lib/request-decoration.coffee code on the client side. It provides both an instantiatable object, and an Angular service. Consult that code for more detail.
+
 ## TODO
 
  * Fetcher/updater for config data. Will fetch remotely, poll periodically, update config without client intervention.
