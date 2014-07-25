@@ -1,3 +1,18 @@
+describe "FeatureToggle config", ->
+  Given -> @subject = new (requireSubject 'lib/feature-toggle')
+  Given -> @subject.setConfig
+    version: 1
+    features:
+      foo:
+        traffic: 1
+  When -> @subject.addConfig
+    features:
+      foo:
+        conf:
+          c1: 'val'
+  Then -> @subject.toggleConfig.features.foo.conf.c1 == 'val'
+  And -> @subject.toggleConfig.features.foo.traffic == 1
+
 describe "FeatureToggle", ->
   Given -> @math = random: jasmine.createSpy("random").andReturn(0.3)
 

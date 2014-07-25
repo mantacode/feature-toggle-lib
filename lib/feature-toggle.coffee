@@ -3,6 +3,7 @@ OverridesToggleConfig = require('./overrides-toggle-config')
 RequestDecoration = require('./request-decoration')
 BuildsUserConfig = require('./builds-user-config')
 BuildsFeatureVals = require('./builds-feature-vals')
+merger = require('./merger')
 
 module.exports = class FeatureToggle
 
@@ -28,6 +29,9 @@ module.exports = class FeatureToggle
   setConfig: (newConfig) ->
     @toggleConfig = newConfig
     this
+
+  addConfig: (newFeatureConf) ->
+    @toggleConfig = merger.merge(@toggleConfig, newFeatureConf)
 
   #private
 
