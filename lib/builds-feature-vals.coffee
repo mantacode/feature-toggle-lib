@@ -17,10 +17,10 @@ module.exports = class BuildsFeatureVals
     build: (userConfig, toggleConfig) ->
       _({}).tap (here) =>
         return if userConfig.enabled != true
-        here = _.extend(here, @confFor(toggleConfig))
+        here = _(here).extend @confFor(toggleConfig)
         _(userConfig).chain().omit(@specialKeys).each (v, k) =>
-          here = _.extend(here, @build(v, toggleConfig["features"][k]))
-    
+          here = _(here).extend @build(v, toggleConfig["features"][k])
+
     #private
 
     confFor: (toggleConfig) ->
