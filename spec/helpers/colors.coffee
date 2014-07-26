@@ -1,0 +1,2 @@
+# Initialize colors
+require 'colors'
