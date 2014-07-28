@@ -35,6 +35,6 @@ module.exports = class BuildsUserConfig
       floor = ceiling
     return winner
 
-  validSplitKeys: (keys) ->
-    return [] if not keys
-    return _(_(keys).keys()).without("version", "enabled")
+  validSplitKeys: (base) ->
+    return [] if not base
+    return _(_(base).keys()).without("version", "enabled")
