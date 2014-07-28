@@ -48,8 +48,9 @@ module.exports = class FeatureToggle
       override(req.headers["x-#{@toggleName()}-off"], false)
 
   createUserConfig: (cookie) ->
-    return cookie if @cookieIsCurrent(cookie)
-    @buildsUserConfig.build(@toggleConfig)
+    base = cookie
+    base = {} if not @cookieIsCurrent(cookie)
+    @buildsUserConfig.build(@toggleConfig, base)
 
   createFeatureVals: (userConfig) ->
     @buildsFeatureVals.build(userConfig, @toggleConfig)
