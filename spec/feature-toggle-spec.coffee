@@ -1,3 +1,18 @@
+describe "FeatureToggle config", ->
+  Given -> @subject = new (requireSubject 'lib/feature-toggle')
+  Given -> @subject.setConfig
+    version: 1
+    features:
+      foo:
+        traffic: 1
+  When -> @subject.addConfig
+    features:
+      foo:
+        conf:
+          c1: 'val'
+  Then -> @subject.toggleConfig.features.foo.conf.c1 == 'val'
+  And -> @subject.toggleConfig.features.foo.traffic == 1
+
 describe "FeatureToggle", ->
   Given -> @math = random: jasmine.createSpy("random").andReturn(0.3)
 
@@ -17,6 +32,22 @@ describe "FeatureToggle", ->
         foo:
           traffic: 1
     Then -> expect(@req.ftoggle.getFeatures()).toEqual({version:1,enabled: true, foo:{enabled: true}});
+
+  describe "req.ftoggle.conf", ->
+    Given -> @subject.setConfig
+      version: 1
+      features:
+        foo:
+          traffic: 1
+          conf:
+            fooConf: "one"
+        bar:
+          traffic: 0
+          conf:
+            barConf: "two"
+    Then -> @req.ftoggle.featureVal("fooConf") == "one"
+    And  -> @req.ftoggle.featureVal("barConf") == null
+    And  -> @req.ftoggle.getFeatureVals()["fooConf"] == "one"
 
   describe "req.ftoggle.doesFeatureExist", ->
     Given -> @subject.setConfig
