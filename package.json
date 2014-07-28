@@ -6,7 +6,12 @@
     "grunt": "~0.4.1",
     "grunt-jasmine-bundle": ">= 0.1.4",
     "express": "~3.0.0",
-    "sandboxed-module": "~0.3.0",
+    "sandboxed-module": "~0.3.0"
+  },
+  "dependencies": {
+    "coffee-script": "~1.6.3",
+    "resolve": "^0.7.4",
+    "underscore": "~1.5.2",
     "varity": "~1.0.1",
     "commander": "~2.3.0",
     "async": "~0.7.0",
@@ -15,10 +20,6 @@
     "underscore.string": "~2.3.3",
     "safe-obj": "~0.1.1",
     "didyoumean": "1.2.0"
-  },
-  "dependencies": {
-    "coffee-script": "~1.6.3",
-    "underscore": "~1.5.2"
   },
   "bin": {
     "ftoggle": "./cli.js"
