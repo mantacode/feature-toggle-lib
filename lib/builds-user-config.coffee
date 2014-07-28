@@ -14,7 +14,7 @@ module.exports = class BuildsUserConfig
       userConfig.version = config.version if config.version?
       if config.features?
         if config.exclusiveSplit
-          pick = @exclusiveSplit(config.features)
+          pick = @exclusiveSplit(config.features, base, config.unsticky)
           userConfig[pick] = @build(config.features[pick], base[pick], true)
         else
           _(config.features).each (feature, name) =>
@@ -22,7 +22,10 @@ module.exports = class BuildsUserConfig
 
   # private
   
-  exclusiveSplit: (features) ->
+  exclusiveSplit: (features, base, unsticky) ->
+    if not unsticky and @validSplitKeys(base).length > 0
+      return @validSplitKeys(base)[0]
+
     floor = 0
     winner = null
     r = @math.random()
@@ -32,3 +35,6 @@ module.exports = class BuildsUserConfig
       floor = ceiling
     return winner
 
+  validSplitKeys: (keys) ->
+    return [] if not keys
+    return _(_(keys).keys()).without("version", "enabled")

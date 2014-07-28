@@ -135,6 +135,39 @@ describe "FeatureToggle", ->
           enabled: false
       Then -> @req.ftoggle.isFeatureEnabled('foo') == true
 
+    context "cookie with exclusiveSplit", ->
+      Given -> @subject.setConfig
+        version: 1
+        name: "foo"
+        exclusiveSplit: 1
+        features:
+          bar:
+            traffic: 0.5
+          baz:
+            traffic: 0.5
+      Given -> @req.cookies['ftoggle-foo'] =
+        version: 1
+        baz:
+          enabled: true 
+      Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+
+    context "cookie with unsticky exclusiveSplit", ->
+      Given -> @subject.setConfig
+        version: 1
+        name: "foo"
+        exclusiveSplit: 1
+        unsticky: 1
+        features:
+          bar:
+            traffic: 0.5
+          baz:
+            traffic: 0.5
+      Given -> @req.cookies['ftoggle-foo'] =
+        version: 1
+        baz:
+          enabled: true 
+      Then -> @req.ftoggle.isFeatureEnabled('bar') == true
+
     describe "middleware uses query parameters", ->
       context "turns on", ->
         Given -> @subject.setConfig
