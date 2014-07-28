@@ -121,6 +121,20 @@ describe "FeatureToggle", ->
          enabled: false
       Then -> @req.ftoggle.isFeatureEnabled('foo') == true
 
+    context "cookie with unsticky", ->
+      Given -> @subject.setConfig
+        version: 1
+        name: "foo"
+        features:
+          foo:
+            traffic: 0.6
+            unsticky: 1
+      Given -> @req.cookies['ftoggle-foo'] =
+        version: 1
+        foo:
+          enabled: false
+      Then -> @req.ftoggle.isFeatureEnabled('foo') == true
+
     describe "middleware uses query parameters", ->
       context "turns on", ->
         Given -> @subject.setConfig
