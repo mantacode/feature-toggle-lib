@@ -2,7 +2,7 @@ _ = require 'underscore'
 
 describe 'cli utils', ->
   Given -> @resolve = jasmine.createSpyObj 'resolve', ['sync']
-  Given -> @path = jasmine.createSpyObj 'path', ['resolve']
+  Given -> @path = jasmine.createSpyObj 'path', ['resolve', 'dirname']
   Given -> @subject = requireSubject 'cli/utils',
     resolve: @resolve
     path: @path
@@ -16,7 +16,8 @@ describe 'cli utils', ->
 
   describe '.getRoot', ->
     Given -> @resolve.sync.when('feature-toggle-lib/package.json', { basedir: process.cwd() }).thenReturn 'resolved'
-    Given -> @path.resolve.when('resolved', '/../../').thenReturn 'absolute path'
+    Given -> @path.dirname.when('resolved').thenReturn 'dirnamed'
+    Given -> @path.resolve.when('dirnamed', '..', '..').thenReturn 'absolute path'
     When -> @res = @subject.getRoot()
     Then -> expect(@res).toBe 'absolute path'
 

@@ -8,7 +8,7 @@ exports.writeBlock = (msgs...) ->
 
 exports.getRoot = ->
   resolved = resolve.sync 'feature-toggle-lib/package.json', { basedir: process.cwd() }
-  return path.resolve resolved, '/../../'
+  return path.resolve(path.dirname(resolved), '..', '..')
 
 exports.exit = (err) ->
   if err

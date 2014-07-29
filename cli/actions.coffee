@@ -5,19 +5,32 @@ utils = require './utils'
 _ = require 'underscore'
 
 exports.init = (name, options) ->
+  # Setup
   root = utils.getRoot()
   options.env = if options.env.length then options.env else [ 'production', 'development' ]
   options.name = name || options.name || path.basename(root)
-  options.configDir = options.configDir || 'config'
+  options.configDir = path.normalize("#{root}/#{(options.configDir || 'config')}")
   ftoggleDir = "#{root}/node_modules/feature-toggle-lib"
-  async.parallel [
+
+  #Ftoggle config
+  config = environments: options.env
+
+  # Build an array of functions to pass to async
+  funcs = _(options.env).reduce (memo, env) ->
+    config[env] = path.relative(ftoggleDir, "#{options.configDir}/ftoggle.#{env}.json")
+    memo.push do (env) ->
+      # Environment config
+      ftConf =
+        version: 1
+        name: "#{options.name}-#{env}"
+        features: {}
+      return (next) ->
+        fs.writeFile("#{options.configDir}/ftoggle.#{env}.json", JSON.stringify(ftConf, null, 2), next)
+    return memo
+  , [
     (next) ->
-      config = _(options.env).reduce (memo, env) ->
-        console.log arguments
-        memo[env] = path.relative ftoggleDir, "#{root}/#{options.configDir}/ftoggle.' + env + '.json'
-        return memo
-      , { environments: options.env }
-      console.log config
-      fs.writeFile("#{ftoggleDir/.ftoggle.config.json", JSON.stringify(config, null, 2), next)
-  ], (err) ->
+      fs.writeFile("#{ftoggleDir}/.ftoggle.config.json", JSON.stringify(config, null, 2), next)
+  ]
+
+  async.parallel funcs, (err) ->
     utils.exit(err)
