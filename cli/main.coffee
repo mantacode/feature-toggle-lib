@@ -7,7 +7,7 @@ _ = require 'underscore'
 program.usage('<command> [feature] [options]')
 
 try
-  config = require '../.ftoggle.config'
+  config = require("#{utils.getFtoggleDir()}/.ftoggle.config")
 catch
 
 if !config && !~process.argv.join(' ').indexOf 'ftoggle init'

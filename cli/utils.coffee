@@ -6,9 +6,13 @@ exports.writeBlock = (msgs...) ->
   console.log '  ', msg for msg in msgs
   console.log()
 
+exports.getFtoggleDir = ->
+  pkg = resolve.sync 'feature-toggle-lib/package.json', { basedir: process.cwd() }
+  return path.dirname(pkg)
+
 exports.getRoot = ->
-  resolved = resolve.sync 'feature-toggle-lib/package.json', { basedir: process.cwd() }
-  return path.resolve(path.dirname(resolved), '..', '..')
+  ftoggleLib = @getFtoggleDir()
+  return path.resolve(ftoggleLib, '..', '..')
 
 exports.exit = (err) ->
   if err

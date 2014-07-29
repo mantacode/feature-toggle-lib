@@ -11,7 +11,7 @@ exports.init = (name, options) ->
   options.name = name || options.name || path.basename(root)
   options.configDir = path.normalize("#{root}/#{(options.configDir || 'config')}")
   ftoggleDir = "#{root}/node_modules/feature-toggle-lib"
-
+  
   #Ftoggle config
   config = environments: options.env
 
@@ -32,5 +32,4 @@ exports.init = (name, options) ->
       fs.writeFile("#{ftoggleDir}/.ftoggle.config.json", JSON.stringify(config, null, 2), next)
   ]
 
-  async.parallel funcs, (err) ->
-    utils.exit(err)
+  async.parallel funcs, utils.exit

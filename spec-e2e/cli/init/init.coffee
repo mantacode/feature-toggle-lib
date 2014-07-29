@@ -6,11 +6,7 @@ describe 'init', ->
   afterEach -> fs.unlinkSync "#{__dirname}/node_modules/feature-toggle-lib/.ftoggle.config.json"
   afterEach -> fs.unlinkSync "#{__dirname}/ftoggle.foo.json"
   afterEach -> fs.unlinkSync "#{__dirname}/ftoggle.bar.json"
-  When (done) ->
-    cp.spawn('ftoggle', ['init', 'banana', '-e', 'foo', '-e', 'bar', '-c', './'],
-      cwd: __dirname
-      stdio: 'inherit'
-    ).on 'close', done
+  When (done) -> runCmd('ftoggle init banana -e foo -e bar -c ./', __dirname, done)
   And -> @ftConfig = require "#{__dirname}/node_modules/feature-toggle-lib/.ftoggle.config"
   And -> @foo = require "#{__dirname}/ftoggle.foo"
   And -> @bar = require "#{__dirname}/ftoggle.bar"

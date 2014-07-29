@@ -13,7 +13,8 @@ describe 'cli main', ->
 
   context 'with config', ->
     Given -> spyOn process, 'exit'
-    Given -> @utils = jasmine.createSpyObj 'utils', ['writeLines']
+    Given -> @utils = jasmine.createSpyObj 'utils', ['writeBlock', 'getFtoggleDir']
+    Given -> @utils.getFtoggleDir.andReturn '..'
     Given -> @config =
       environments: ['production']
       production: 'ftoggle.json'
