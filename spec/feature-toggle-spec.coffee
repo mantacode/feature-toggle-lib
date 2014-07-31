@@ -5,6 +5,8 @@ describe "FeatureToggle config", ->
     features:
       foo:
         traffic: 1
+      bar:
+        traffic: 1
   When -> @subject.addConfig
     features:
       foo:
