@@ -1,2 +1,0 @@
-# Initialize colors
-require 'colors'

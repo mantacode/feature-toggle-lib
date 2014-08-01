@@ -1,5 +1,7 @@
 resolve = require 'resolve'
 path = require 'path'
+_ = require 'underscore'
+extend = require 'config-extend'
 
 exports.writeBlock = (msgs...) ->
   console.log()
@@ -20,3 +22,17 @@ exports.exit = (err) ->
     process.exit(1)
   else
     process.exit(0)
+
+exports.expand = (obj, path, val) ->
+  parts = path.split('.')
+  expandPath = parts.shift()
+
+  while(parts.length)
+    if !_(obj).safe(expandPath)
+      _(obj).expand(expandPath, _.clone(val))
+      
+    expandPath += '.features.' + parts.shift()
+  
+  _(obj).expand(expandPath, val)
+
+exports.iterate = ->

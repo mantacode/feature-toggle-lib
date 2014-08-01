@@ -6,6 +6,9 @@ describe 'cli utils', ->
   Given -> @subject = requireSubject 'cli/utils',
     resolve: @resolve
     path: @path
+    'foo file': 'foo exports'
+    'bar file': 'bar exports'
+    underscore: _
 
   describe '.writeBlock', ->
     Given -> spyOn console, 'log'
@@ -34,3 +37,15 @@ describe 'cli utils', ->
       Then -> expect(@subject.writeBlock).toHaveBeenCalledWith 'err'
       And -> expect(process.exit).toHaveBeenCalledWith 1
 
+  describe '.expand', ->
+    Given -> @obj = {}
+    When -> @subject.expand @obj, 'foo.bar.baz', { traffic: 1 }
+    Then -> expect(@obj).toEqual
+      foo:
+        traffic: 1
+        features:
+          bar:
+            traffic: 1
+            features:
+              baz:
+                traffic: 1

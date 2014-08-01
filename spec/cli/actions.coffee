@@ -1,14 +1,14 @@
 path = require 'path'
+utils = require '../../cli/utils'
 
 describe 'actions', ->
   Given -> @fs = jasmine.createSpyObj 'fs', ['exists', 'writeFile']
-  Given -> @utils = jasmine.createSpyObj 'utils', ['getRoot', 'exit']
+  Given -> @utils = jasmine.createSpyObj 'utils', ['getRoot', 'exit', 'iterate', 'expand']
   Given -> @subject = requireSubject 'cli/actions',
     fs: @fs
     './utils': @utils
 
   describe '.init', ->
-    Given -> @cb = jasmine.captor()
     Given -> @utils.getRoot.andReturn 'banana'
     Given -> @fs.writeFile.andCallFake (path, content, cb) -> cb()
     Given -> @options =
@@ -32,3 +32,23 @@ describe 'actions', ->
       features: {}
     , null, 2), jasmine.any(Function)
     And -> expect(@utils.exit).toHaveBeenCalled()
+
+  describe '.add', ->
+    Given -> @utils.expand.plan = utils.expand
+    Given -> @add = jasmine.captor()
+    Given -> @options =
+      ftoggle:
+        env:
+          config:
+            features: {}
+    Given -> @next = jasmine.createSpy 'next'
+    When -> @subject.add 'foo.bar', @options
+    And -> expect(@utils.iterate).toHaveBeenCalledWith @options, @add.capture(), @utils.exit
+    And -> @add.value 'env', @next
+    Then -> expect(@options.ftoggle.env.config.features).toEqual
+      foo:
+        traffic: 1
+        features:
+          bar:
+            traffic: 1
+    And -> expect(@next).toHaveBeenCalled()

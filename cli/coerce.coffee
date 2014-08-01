@@ -1,3 +1,3 @@
 exports.collect = (arg, memo) ->
-  memo.push(arg)
+  memo.push(a) for a in arg.split(',')
   return memo
