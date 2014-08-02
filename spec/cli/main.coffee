@@ -13,7 +13,7 @@ describe 'cli main', ->
 
   context 'with config', ->
     Given -> spyOn process, 'exit'
-    Given -> @utils = jasmine.createSpyObj 'utils', ['writeBlock', 'getFtoggleDir', 'getConfigs']
+    Given -> @utils = jasmine.createSpyObj 'utils', ['writeBlock', 'exit', 'getFtoggleDir', 'getConfigs', 'write', 'bump', 'add', 'commit']
     Given -> @utils.getFtoggleDir.andReturn '..'
     Given -> @config =
       environments: ['production']
@@ -55,6 +55,74 @@ describe 'cli main', ->
         When -> @subject.parse(['node', 'ftoggle', 'init'])
         Then -> expect(@actions.init).toHaveBeenCalled()
 
+    describe '.takeAction', ->
+      Given -> @utils.commit.andCallFake (cb) ->
+        @check += 'commit'
+        cb()
+      Given -> @utils.add.andCallFake (cb) ->
+        @check += 'gitadd'
+        cb()
+      Given -> @utils.write.andCallFake (cb) ->
+        @check += 'write'
+        cb()
+      Given -> @utils.bump.andCallFake (cb) ->
+        @check += 'bump'
+        cb()
+      Given -> @actions.add.andCallFake (cb) ->
+        @check += 'add'
+        cb()
+      Given -> @options =
+        _name: 'add'
+        check: ''
+      context 'base options', ->
+        Given -> @options =
+          _name: 'add'
+          check: ''
+        When -> @subject.takeAction @options
+        Then -> expect(@options.ftoggle).toEqual
+          environments: ['production']
+          production:
+            path: 'ftoggle.json'
+            config:
+              version: 1
+        And -> expect(@options.modified).toEqual []
+        And -> expect(@utils.exit).toHaveBeenCalled()
+        And -> expect(@options.check).toBe 'addwrite'
+
+      context 'with all options', ->
+        Given -> @options =
+          _name: 'add'
+          check: ''
+          bump: true
+          add: true
+          commit: true
+        When -> @subject.takeAction @options
+        Then -> expect(@options.ftoggle).toEqual
+          environments: ['production']
+          production:
+            path: 'ftoggle.json'
+            config:
+              version: 1
+        And -> expect(@options.modified).toEqual []
+        And -> expect(@utils.exit).toHaveBeenCalled()
+        And -> expect(@options.check).toBe 'addbumpwritegitaddcommit'
+
+      context 'with commit and not add', ->
+        Given -> @options =
+          _name: 'add'
+          check: ''
+          commit: true
+        When -> @subject.takeAction @options
+        Then -> expect(@options.ftoggle).toEqual
+          environments: ['production']
+          production:
+            path: 'ftoggle.json'
+            config:
+              version: 1
+        And -> expect(@options.modified).toEqual []
+        And -> expect(@utils.exit).toHaveBeenCalled()
+        And -> expect(@options.check).toBe 'addwritegitaddcommit'
+
     describe 'add', ->
       context 'correct options', ->
         Given -> @cmd = _(@subject.commands).findWhere { _name: 'add' }
@@ -79,5 +147,6 @@ describe 'cli main', ->
         And -> expect(@cmd._description).toBe 'Add a new feature to ftoggle'
 
       context 'calls correct action', ->
+        Given -> spyOn @subject._events, 'add'
         When -> @subject.parse(['node', 'ftoggle', 'add', 'feature'])
-        Then -> expect(@actions.add).toHaveBeenCalled()
+        Then -> expect(@subject._events.add).toHaveBeenCalled()

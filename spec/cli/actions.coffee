@@ -1,5 +1,4 @@
 path = require 'path'
-utils = require '../../cli/utils'
 
 describe 'actions', ->
   Given -> @fs = jasmine.createSpyObj 'fs', ['exists', 'writeFile']
@@ -34,21 +33,30 @@ describe 'actions', ->
     And -> expect(@utils.exit).toHaveBeenCalled()
 
   describe '.add', ->
-    Given -> @utils.expand.plan = utils.expand
-    Given -> @add = jasmine.captor()
-    Given -> @options =
-      ftoggle:
-        env:
-          config:
-            features: {}
-    Given -> @next = jasmine.createSpy 'next'
-    When -> @subject.add 'foo.bar', @options
-    And -> expect(@utils.iterate).toHaveBeenCalledWith @options, @add.capture(), @utils.exit
-    And -> @add.value 'env', @next
-    Then -> expect(@options.ftoggle.env.config.features).toEqual
-      foo:
-        traffic: 1
-        features:
-          bar:
-            traffic: 1
-    And -> expect(@next).toHaveBeenCalled()
+    Given -> spyOn(global, 'setImmediate').andCallFake (f) -> f()
+    Given -> @cb = jasmine.createSpy 'cb'
+    context 'with existing config env', ->
+      Given -> @options =
+        env: ['env']
+        modified: []
+        ftoggle:
+          env:
+            config:
+              features: {}
+      When -> @subject.add.apply @options, ['foo.bar', @cb]
+      Then -> expect(@utils.expand).toHaveBeenCalledWith {}, 'foo.bar', { traffic: 1 }
+      And -> expect(@options.modified).toEqual ['env']
+      And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar'
+
+    context 'with non-existent env', ->
+      Given -> @options =
+        env: ['banana']
+        modified: []
+        ftoggle:
+          env:
+            config:
+              features: {}
+      When -> @subject.add.apply @options, ['foo.bar', @cb]
+      Then -> expect(@utils.expand).not.toHaveBeenCalled()
+      And -> expect(@options.modified).toEqual []
+      And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar'

@@ -3,6 +3,8 @@ utils = require './utils'
 coerce = require './coerce'
 actions = require './actions'
 _ = require 'underscore'
+async = require 'async'
+extend = require 'config-extend'
 
 #  Add some shortcuts to the options that every command has
 program.Command.prototype.add = ->
@@ -44,10 +46,17 @@ program.version(version || require('../package').version)
 
 program.name = 'ftoggle'
 
-takeAction = (args...) ->
+takeAction = program.takeAction = (args...) ->
   options = args.pop()
   options.ftoggle = config
-  actions[options._name].apply(actions, arguments)
+  options.modified = []
+  fns = [ actions[options._name] ]
+  fns.unshift utils.bump if options.bump
+  fns.unshift utils.write
+  fns.unshift utils.add if options.add or options.commit
+  fns.unshift utils.commit if options.commit
+  fn = async.compose.apply async, fns
+  fn.apply options, args.concat(utils.exit)
 
 #  Tell ftoggle about where things are
 program
@@ -66,6 +75,7 @@ program
   .option('-o, --off <name>|<list>', 'Set traffic to 0 in these configs', coerce.collect, [])
   .action(takeAction)
 
-program.parse process.argv
+if _(process.argv.join('')).contains 'ftoggle'
+  program.parse process.argv
 
 module.exports = program

@@ -1,7 +1,7 @@
 resolve = require 'resolve'
 path = require 'path'
 _ = require 'underscore'
-extend = require 'config-extend'
+async = require 'async'
 
 exports.writeBlock = (msgs...) ->
   console.log()
@@ -34,5 +34,3 @@ exports.expand = (obj, path, val) ->
     expandPath += '.features.' + parts.shift()
   
   _(obj).expand(expandPath, val)
-
-exports.iterate = ->

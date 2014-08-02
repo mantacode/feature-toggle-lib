@@ -34,8 +34,11 @@ exports.init = (name, options) ->
 
   async.parallel funcs, utils.exit
 
-exports.add = (feature, options) ->
-  utils.iterate options, (env, next) ->
-    utils.expand(options.ftoggle[env].config.features, feature, { traffic: 1 })
+exports.add = (feature, cb) ->
+  async.each @env, (env, next) =>
+    if @ftoggle[env]
+      utils.expand(@ftoggle[env].config.features, feature, { traffic: 1 })
+      @modified.push(env)
     next()
-  , utils.exit
+  , ->
+    cb(null, feature)
