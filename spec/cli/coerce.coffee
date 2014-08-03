@@ -13,3 +13,8 @@ describe 'coerce', ->
       Given -> @list = ['foo']
       When -> @subject.collect 'bar,baz', @list
       Then -> expect(@list).toEqual ['foo', 'bar', 'baz' ]
+
+    context 'called without param', ->
+      When -> @res = @subject.collect undefined, undefined
+      Then -> expect(@res).toBe true
+

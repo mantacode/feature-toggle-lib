@@ -32,29 +32,6 @@ describe 'cli main', ->
     describe 'version', ->
       Then -> expect(@subject.version()).toBe 1
 
-    describe 'init', ->
-      context 'correct options', ->
-        Given -> @cmd = _(@subject.commands).findWhere { _name: 'init' }
-        Then -> expect(_(@cmd.options).pluck('flags').join('\n')).toBe """
-          -e, --env <name>|<list>
-          -c, --config-dir <path>
-          -n, --name <name>
-        """
-        And -> expect(_(@cmd.options).pluck('description').join('\n')).toBe """
-          Specify environments
-          Location of config files relative to cwd
-          Project name
-        """
-        And -> expect(@cmd._args).toEqual [
-          required: false
-          name: 'name'
-        ]
-        And -> expect(@cmd._description).toBe 'Initialize ftoggle in a project'
-
-      context 'calls correct action', ->
-        When -> @subject.parse(['node', 'ftoggle', 'init'])
-        Then -> expect(@actions.init).toHaveBeenCalled()
-
     describe '.takeAction', ->
       Given -> @utils.commit.andCallFake (cb) ->
         @check += 'commit'
@@ -123,22 +100,47 @@ describe 'cli main', ->
         And -> expect(@utils.exit).toHaveBeenCalled()
         And -> expect(@options.check).toBe 'addwritegitaddcommit'
 
+    describe 'init', ->
+      context 'correct options', ->
+        Given -> @cmd = _(@subject.commands).findWhere { _name: 'init' }
+        Then -> expect(_(@cmd.options).pluck('flags').join('\n')).toBe """
+          -e, --env <name|list>
+          -c, --config-dir <path>
+          -n, --name <name>
+        """
+        And -> expect(_(@cmd.options).pluck('description').join('\n')).toBe """
+          Specify environments
+          Location of config files relative to cwd
+          Project name
+        """
+        And -> expect(@cmd._args).toEqual [
+          required: false
+          name: 'name'
+        ]
+        And -> expect(@cmd._description).toBe 'Initialize ftoggle in a project'
+
+      context 'calls correct action', ->
+        When -> @subject.parse(['node', 'ftoggle', 'init'])
+        Then -> expect(@actions.init).toHaveBeenCalled()
+
     describe 'add', ->
       context 'correct options', ->
         Given -> @cmd = _(@subject.commands).findWhere { _name: 'add' }
         Then -> expect(_(@cmd.options).pluck('flags').join('\n')).toBe """
-          -a, --add
+          -s, --stage [env|list]
           -b, --bump
-          -c, --commit
-          -e, --env <name>|<list>
-          -o, --off <name>|<list>
+          -c, --commit [env|list]
+          -e, --env <name|list>
+          --dry-run
+          -E, --enable [name|list]
         """
         And -> expect(_(@cmd.options).pluck('description').join('\n')).toBe """
-          Stage the changes
+          Stage the changes [for a given env only]
           Bump the version
-          Commit the changes
+          Commit the changes [for a given env only]
           List of environments to apply the change to
-          Set traffic to 0 in these configs
+          Write changes to console instead of the config files
+          Set traffic to 1 in these configs
         """
         And -> expect(@cmd._args).toEqual [
           required: true

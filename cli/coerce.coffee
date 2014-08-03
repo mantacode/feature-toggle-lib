@@ -1,3 +1,7 @@
 exports.collect = (arg, memo) ->
-  memo.push(a) for a in arg.split(',')
-  return memo
+  if arg
+    memo = memo || []
+    memo.push(a) for a in arg.split(',')
+    return memo
+  else
+    return true
