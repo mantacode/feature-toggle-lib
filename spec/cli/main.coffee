@@ -102,6 +102,7 @@ describe 'cli main', ->
               version: 1
         And -> expect(@options.modified).toEqual []
         And -> expect(@utils.exit).toHaveBeenCalled()
+        And -> expect(@options.stage).toBe true
         And -> expect(@options.check).toBe 'addwritestagecommit'
 
     describe 'init', ->

@@ -61,6 +61,7 @@ describe 'cli utils', ->
   describe '.bump', ->
     Given -> @options =
       environments: ['banana', 'pear']
+      modified: ['apple']
       ftoggle:
         banana:
           config:
@@ -72,11 +73,12 @@ describe 'cli utils', ->
     When -> @subject.bump.apply @options, ['feature', 'traffic', @cb]
     Then -> expect(@options.ftoggle.banana.config.version).toEqual 4
     And -> expect(@options.ftoggle.pear.config.version).toEqual 4
+    And -> expect(@options.modified).toEqual ['apple', 'banana', 'pear']
     And -> expect(@cb).toHaveBeenCalledWith undefined, 'feature', 'traffic'
 
   describe '.write', ->
     Given -> @options =
-      environments: ['banana', 'pear']
+      modified: ['banana', 'pear', 'banana']
       configDir: 'config'
       ftoggle:
         banana:
@@ -90,21 +92,37 @@ describe 'cli utils', ->
     When -> @subject.write.apply @options, ['feature', 'traffic', @cb]
     Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'config/ftoggle.banana.json', JSON.stringify(version: 1), jasmine.any(Function)
     And -> expect(@fs.writeFile).toHaveBeenCalledWith 'config/ftoggle.pear.json', JSON.stringify(version: 1), jasmine.any(Function)
+    And -> expect(@fs.writeFile.callCount).toBe 2
     And -> expect(@cb).toHaveBeenCalledWith undefined, 'feature', 'traffic'
 
   describe '.stage', ->
     Given -> @add = new EventEmitter()
-    Given -> @cp.spawn.when('git', ['add', 'config/*']).thenReturn @add
     Given -> @cb = jasmine.createSpy 'cb'
     Given -> @options =
       configDir: 'config'
 
-    context 'no error', ->
+    context 'no error - all configs', ->
+      Given -> @cp.spawn.when('git', ['add', 'config/*']).thenReturn @add
       When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
       And -> @add.emit 'close', 0
       Then -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic'
 
+    context 'no error - list of configs', ->
+      Given -> @options.stage = ['banana', 'pear']
+      Given -> @cp.spawn.when('git', ['add', 'config/ftoggle.banana.json', 'config/ftoggle.pear.json']).thenReturn @add
+      When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
+      And -> @add.emit 'close', 0
+      Then -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic'
+
+    context 'no error - list of configs', ->
+      Given -> @options.stage = ['banana', 'pear']
+      Given -> @cp.spawn.when('git', ['add', 'config/ftoggle.banana.json', 'config/ftoggle.pear.json']).thenReturn @add
+      When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
+      And -> @add.emit 'close', 1
+      Then -> expect(@cb).toHaveBeenCalledWith "#{chalk.gray('git add config/ftoggle.banana.json config/ftoggle.pear.json')} returned code #{chalk.red('1')}", 'feature', 'traffic'
+
     context 'error', ->
+      Given -> @cp.spawn.when('git', ['add', 'config/*']).thenReturn @add
       When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
       And -> @add.emit 'close', 1
       Then -> expect(@cb).toHaveBeenCalledWith "#{chalk.gray('git add config/*')} returned code #{chalk.red('1')}", 'feature', 'traffic'

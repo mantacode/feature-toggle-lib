@@ -55,9 +55,10 @@ takeAction = program.takeAction = (args...) ->
   options.ftoggle = config
   options.modified = []
   fns = [ actions[options._name] ]
+  options.stage = options.commit if options.commit and not options.stage
   fns.unshift utils.bump if options.bump
   fns.unshift utils.write
-  fns.unshift utils.stage if options.stage or options.commit
+  fns.unshift utils.stage if options.stage
   fns.unshift utils.commit if options.commit
   fn = async.compose.apply async, fns
   fn.apply options, args.concat(utils.exit)

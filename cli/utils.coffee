@@ -44,22 +44,24 @@ exports.bump = (args...) ->
   cb = args.pop()
   async.each @environments, (env, next) =>
     @ftoggle[env].config.version = version
+    @modified.push(env)
     next()
   , (err) ->
     cb.apply null, [err].concat(args)
 
 exports.write = (args...) ->
   cb = args.pop()
-  async.each @environments, (env, next) =>
+  async.each _(@modified).uniq(), (env, next) =>
     fs.writeFile "#{@configDir}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env].config), next
   , (err) ->
     cb.apply null, [err].concat(args)
 
 exports.stage = (args...) ->
   cb = args.pop()
-  add = cp.spawn 'git', ['add', "#{@configDir}/*"]
+  files = if _(@stage).isArray() then _(@stage).map( (env) => "#{@configDir}/ftoggle.#{env}.json" ) else ["#{@configDir}/*"]
+  add = cp.spawn 'git', ['add'].concat(files)
   add.on 'close', (code) =>
-    cb.apply null, [if code then exports.failedCmdMessage("git add #{@configDir}/*", code) else null].concat(args)
+    cb.apply null, [if code then exports.failedCmdMessage("git add #{files.join(' ')}", code) else null].concat(args)
 
 exports.commit = (args...) ->
   cb = args.pop()

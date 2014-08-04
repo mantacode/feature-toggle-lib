@@ -3,6 +3,7 @@ fs = require 'fs'
 path = require 'path'
 utils = require './utils'
 _ = require 'underscore'
+list = require 'listify'
 
 exports.init = (name, options) ->
   # Setup
@@ -39,11 +40,11 @@ exports.init = (name, options) ->
   async.parallel funcs, utils.exit
 
 exports.add = (feature, cb) ->
-  console.log require('chalk').red('Add commitMsg to options')
   async.each @env, (env, next) =>
     if @ftoggle[env]
       utils.expand(@ftoggle[env].config.features, feature, { traffic: 1 })
       @modified.push(env)
     next()
-  , ->
+  , =>
+    @commitMsg = "Added ftoggle feature #{feature} to #{list(@modified)}"
     cb(null, feature)

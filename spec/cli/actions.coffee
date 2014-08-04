@@ -50,6 +50,7 @@ describe 'actions', ->
       When -> @subject.add.apply @options, ['foo.bar', @cb]
       Then -> expect(@utils.expand).toHaveBeenCalledWith {}, 'foo.bar', { traffic: 1 }
       And -> expect(@options.modified).toEqual ['env']
+      And -> expect(@options.commitMsg).toBe 'Added ftoggle feature foo.bar to env'
       And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar'
 
     context 'with non-existent env', ->
