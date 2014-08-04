@@ -4,22 +4,28 @@ module.exports = class BuildsUserConfig
 
   constructor: (@math) ->
 
-  build: (config, pass = false) ->
+  build: (config, base = {}, pass = false) ->
     _({}).tap (userConfig) =>
-      userConfig.enabled = (if config.traffic? then @math.random() <= config.traffic else true)
-      userConfig.enabled = true if pass
+      if base.enabled? and not config.unsticky
+        userConfig.enabled = base.enabled
+      else
+        userConfig.enabled = (if config.traffic? then @math.random() <= config.traffic else true)
+        userConfig.enabled = true if pass
       userConfig.version = config.version if config.version?
       if config.features?
         if config.exclusiveSplit
-          pick = @exclusiveSplit(config.features)
-          userConfig[pick] = @build(config.features[pick], true)
+          pick = @exclusiveSplit(config.features, base, config.unsticky)
+          userConfig[pick] = @build(config.features[pick], base[pick], true)
         else
           _(config.features).each (feature, name) =>
-            userConfig[name] = @build(feature)
+            userConfig[name] = @build(feature, base[name])
 
   # private
   
-  exclusiveSplit: (features) ->
+  exclusiveSplit: (features, base, unsticky) ->
+    if not unsticky and @validSplitKeys(base).length > 0
+      return @validSplitKeys(base)[0]
+
     floor = 0
     winner = null
     r = @math.random()
@@ -29,3 +35,6 @@ module.exports = class BuildsUserConfig
       floor = ceiling
     return winner
 
+  validSplitKeys: (base) ->
+    return [] if not base
+    return _(_(base).keys()).without("version", "enabled")

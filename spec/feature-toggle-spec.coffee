@@ -1,3 +1,20 @@
+describe "FeatureToggle config", ->
+  Given -> @subject = new (requireSubject 'lib/feature-toggle')
+  Given -> @subject.setConfig
+    version: 1
+    features:
+      foo:
+        traffic: 1
+      bar:
+        traffic: 1
+  When -> @subject.addConfig
+    features:
+      foo:
+        conf:
+          c1: 'val'
+  Then -> @subject.toggleConfig.features.foo.conf.c1 == 'val'
+  And -> @subject.toggleConfig.features.foo.traffic == 1
+
 describe "FeatureToggle", ->
   Given -> @math = random: jasmine.createSpy("random").andReturn(0.3)
 
@@ -17,6 +34,22 @@ describe "FeatureToggle", ->
         foo:
           traffic: 1
     Then -> expect(@req.ftoggle.getFeatures()).toEqual({version:1,enabled: true, foo:{enabled: true}});
+
+  describe "req.ftoggle.conf", ->
+    Given -> @subject.setConfig
+      version: 1
+      features:
+        foo:
+          traffic: 1
+          conf:
+            fooConf: "one"
+        bar:
+          traffic: 0
+          conf:
+            barConf: "two"
+    Then -> @req.ftoggle.featureVal("fooConf") == "one"
+    And  -> @req.ftoggle.featureVal("barConf") == null
+    And  -> @req.ftoggle.getFeatureVals()["fooConf"] == "one"
 
   describe "req.ftoggle.doesFeatureExist", ->
     Given -> @subject.setConfig
@@ -89,6 +122,53 @@ describe "FeatureToggle", ->
         foo:
          enabled: false
       Then -> @req.ftoggle.isFeatureEnabled('foo') == true
+
+    context "cookie with unsticky", ->
+      Given -> @subject.setConfig
+        version: 1
+        name: "foo"
+        features:
+          foo:
+            traffic: 0.6
+            unsticky: 1
+      Given -> @req.cookies['ftoggle-foo'] =
+        version: 1
+        foo:
+          enabled: false
+      Then -> @req.ftoggle.isFeatureEnabled('foo') == true
+
+    context "cookie with exclusiveSplit", ->
+      Given -> @subject.setConfig
+        version: 1
+        name: "foo"
+        exclusiveSplit: 1
+        features:
+          bar:
+            traffic: 0.5
+          baz:
+            traffic: 0.5
+      Given -> @req.cookies['ftoggle-foo'] =
+        version: 1
+        baz:
+          enabled: true 
+      Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+
+    context "cookie with unsticky exclusiveSplit", ->
+      Given -> @subject.setConfig
+        version: 1
+        name: "foo"
+        exclusiveSplit: 1
+        unsticky: 1
+        features:
+          bar:
+            traffic: 0.5
+          baz:
+            traffic: 0.5
+      Given -> @req.cookies['ftoggle-foo'] =
+        version: 1
+        baz:
+          enabled: true 
+      Then -> @req.ftoggle.isFeatureEnabled('bar') == true
 
     describe "middleware uses query parameters", ->
       context "turns on", ->

@@ -2,12 +2,15 @@ math = require('./math')
 OverridesToggleConfig = require('./overrides-toggle-config')
 RequestDecoration = require('./request-decoration')
 BuildsUserConfig = require('./builds-user-config')
+BuildsFeatureVals = require('./builds-feature-vals')
+merger = require('./merger')
 
 module.exports = class FeatureToggle
 
   constructor: ->
     @toggleConfig = {}
     @buildsUserConfig = new BuildsUserConfig(math)
+    @buildsFeatureVals = new BuildsFeatureVals()
 
   newMiddleware: ->
     (req, res, next) =>
@@ -15,7 +18,8 @@ module.exports = class FeatureToggle
       userConfig = @createUserConfig(req.cookies[@toggleName()])
       @overrideByHeader(userConfig, req)
       @overrideByQueryParam(userConfig, req)
-      req.ftoggle = new RequestDecoration(userConfig)
+      featureVals = @createFeatureVals(userConfig)
+      req.ftoggle = new RequestDecoration(userConfig, featureVals)
       cookieOptions = @toggleConfig.cookieOptions || {}
       for k, v of defaults
         cookieOptions[k] = cookieOptions[k] or v
@@ -25,6 +29,9 @@ module.exports = class FeatureToggle
   setConfig: (newConfig) ->
     @toggleConfig = newConfig
     this
+
+  addConfig: (newFeatureConf) ->
+    @toggleConfig = merger.merge(@toggleConfig, newFeatureConf)
 
   #private
 
@@ -41,8 +48,12 @@ module.exports = class FeatureToggle
       override(req.headers["x-#{@toggleName()}-off"], false)
 
   createUserConfig: (cookie) ->
-    return cookie if @cookieIsCurrent(cookie)
-    @buildsUserConfig.build(@toggleConfig)
+    base = cookie
+    base = {} if not @cookieIsCurrent(cookie)
+    @buildsUserConfig.build(@toggleConfig, base)
+
+  createFeatureVals: (userConfig) ->
+    @buildsFeatureVals.build(userConfig, @toggleConfig)
 
   cookieIsCurrent: (cookie) ->
     return false unless cookie?
