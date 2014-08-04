@@ -3,6 +3,8 @@ path = require 'path'
 _ = require 'underscore'
 async = require 'async'
 fs = require 'fs'
+cp = require 'child_process'
+chalk = require 'chalk'
 
 exports.writeBlock = (msgs...) ->
   console.log()
@@ -48,11 +50,22 @@ exports.bump = (args...) ->
 
 exports.write = (args...) ->
   cb = args.pop()
-  root = exports.getRoot()
   async.each @environments, (env, next) =>
-    # Remove all .. parts in the path, since config locations are relative to the root already
-    file = _(@ftoggle[env].path.split('/')).reject( (part) -> return part == '..').join('/')
-    fs.writeFile "#{root}/#{file}", JSON.stringify(@ftoggle[env].config), next
+    fs.writeFile "#{@configDir}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env].config), next
   , (err) ->
     cb.apply null, [err].concat(args)
 
+exports.stage = (args...) ->
+  cb = args.pop()
+  add = cp.spawn 'git', ['add', "#{@configDir}/*"]
+  add.on 'close', (code) =>
+    cb.apply null, [if code then exports.failedCmdMessage("git add #{@configDir}/*", code) else null].concat(args)
+
+exports.commit = (args...) ->
+  cb = args.pop()
+  commit = cp.spawn 'git', ['commit', '-m', @commitMsg]
+  commit.on 'close', (code) =>
+    cb.apply null, [if code then exports.failedCmdMessage("git commit -m '#{@commitMsg}'", code) else null].concat(args)
+
+exports.failedCmdMessage = (cmd, code) ->
+  return "#{chalk.gray(cmd)} returned code #{chalk.red(code)}"

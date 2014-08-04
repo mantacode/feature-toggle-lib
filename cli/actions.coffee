@@ -13,11 +13,15 @@ exports.init = (name, options) ->
   ftoggleDir = "#{root}/node_modules/feature-toggle-lib"
   
   #Ftoggle config
-  config = environments: options.env
+  config =
+    environments: options.env
+    configDir: options.configDir
+    name: options.name
 
   # Build an array of functions to pass to async
   funcs = _(options.env).reduce (memo, env) ->
-    config[env] = path.relative(ftoggleDir, "#{options.configDir}/ftoggle.#{env}.json")
+    config[env] =
+      path: path.relative(ftoggleDir, "#{options.configDir}/ftoggle.#{env}.json")
     memo.push do (env) ->
       # Environment config
       ftConf =
@@ -35,6 +39,7 @@ exports.init = (name, options) ->
   async.parallel funcs, utils.exit
 
 exports.add = (feature, cb) ->
+  console.log require('chalk').red('Add commitMsg to options')
   async.each @env, (env, next) =>
     if @ftoggle[env]
       utils.expand(@ftoggle[env].config.features, feature, { traffic: 1 })

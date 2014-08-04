@@ -1,5 +1,6 @@
 _ = require 'underscore'
 EventEmitter = require('events').EventEmitter
+chalk = require 'chalk'
 
 describe 'cli utils', ->
   Given -> @resolve = jasmine.createSpyObj 'resolve', ['sync']
@@ -14,6 +15,8 @@ describe 'cli utils', ->
     underscore: _
     fs: @fs
     child_process: @cp
+  ,
+    String: String
 
   describe '.writeBlock', ->
     Given -> spyOn console, 'log'
@@ -72,27 +75,53 @@ describe 'cli utils', ->
     And -> expect(@cb).toHaveBeenCalledWith undefined, 'feature', 'traffic'
 
   describe '.write', ->
-    Given -> spyOn(@subject, 'getRoot').andReturn 'blah'
     Given -> @options =
       environments: ['banana', 'pear']
+      configDir: 'config'
       ftoggle:
         banana:
-          path: '../../banana'
           config:
             version: 1
         pear:
-          path: '../../pear'
           config:
             version: 1
     Given -> @cb = jasmine.createSpy 'cb'
     Given -> @fs.writeFile.andCallFake (path, obj, cb) -> cb()
-    When -> @subject.write.apply @options, ['traffic', 'feature', @cb]
-    Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'blah/banana', JSON.stringify(version: 1), jasmine.any(Function)
-    And -> expect(@fs.writeFile).toHaveBeenCalledWith 'blah/pear', JSON.stringify(version: 1), jasmine.any(Function)
-    And -> expect(@cb).toHaveBeenCalledWith undefined, 'traffic', 'feature'
+    When -> @subject.write.apply @options, ['feature', 'traffic', @cb]
+    Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'config/ftoggle.banana.json', JSON.stringify(version: 1), jasmine.any(Function)
+    And -> expect(@fs.writeFile).toHaveBeenCalledWith 'config/ftoggle.pear.json', JSON.stringify(version: 1), jasmine.any(Function)
+    And -> expect(@cb).toHaveBeenCalledWith undefined, 'feature', 'traffic'
 
-  describe '.add', ->
-    Given -> spyOn(@subject, 'getRoot').andReturn 'blah'
+  describe '.stage', ->
     Given -> @add = new EventEmitter()
-    Given -> @cp.spawn.when('git', ['add', 'blah/config/*']).thenReturn @add
-    When -> @subject.add
+    Given -> @cp.spawn.when('git', ['add', 'config/*']).thenReturn @add
+    Given -> @cb = jasmine.createSpy 'cb'
+    Given -> @options =
+      configDir: 'config'
+
+    context 'no error', ->
+      When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
+      And -> @add.emit 'close', 0
+      Then -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic'
+
+    context 'error', ->
+      When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
+      And -> @add.emit 'close', 1
+      Then -> expect(@cb).toHaveBeenCalledWith "#{chalk.gray('git add config/*')} returned code #{chalk.red('1')}", 'feature', 'traffic'
+
+  describe '.commit', ->
+    Given -> @commit = new EventEmitter
+    Given -> @cp.spawn.when('git', ['commit', '-m', 'Added ftoggle feature foo.bar to banana and pear']).thenReturn @commit
+    Given -> @cb = jasmine.createSpy 'cb'
+    Given -> @options =
+      commitMsg: 'Added ftoggle feature foo.bar to banana and pear'
+
+    context 'no error', ->
+      When -> @subject.commit.apply @options, ['feature', 'traffic', @cb]
+      And -> @commit.emit 'close', 0
+      Then -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic'
+
+    context 'error', ->
+      When -> @subject.commit.apply @options, ['feature', 'traffic', @cb]
+      And -> @commit.emit 'close', 1
+      Then -> expect(@cb).toHaveBeenCalledWith "#{chalk.gray('git commit -m \'Added ftoggle feature foo.bar to banana and pear\'')} returned code #{chalk.red('1')}", 'feature', 'traffic'

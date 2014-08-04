@@ -1,5 +1,6 @@
 _ = require 'underscore'
 cp = require 'child_process'
+chalk = require 'chalk'
 
 describe 'cli main', ->
   context 'with no config', ->
@@ -7,16 +8,16 @@ describe 'cli main', ->
     Given -> @utils = jasmine.createSpyObj 'utils', ['writeBlock']
     When -> @subject = requireSubject 'cli/main',
       './utils': @utils
-    # Can't seem to get "colors" working from the test (hence the random "undefined")
-    Then -> expect(@utils.writeBlock).toHaveBeenCalledWith 'Unable to locate configuration information about this repository.', 'If you have not done so, you can run undefined to configure ftoggle for this repository.'
+    Then -> expect(@utils.writeBlock).toHaveBeenCalledWith 'Unable to locate configuration information about this repository.', "If you have not done so, you can run #{chalk.gray('ftoggle init')} to configure ftoggle for this repository."
     And -> expect(process.exit).toHaveBeenCalled()
 
   context 'with config', ->
     Given -> spyOn process, 'exit'
-    Given -> @utils = jasmine.createSpyObj 'utils', ['writeBlock', 'exit', 'getFtoggleDir', 'getConfigs', 'write', 'bump', 'add', 'commit']
+    Given -> @utils = jasmine.createSpyObj 'utils', ['writeBlock', 'exit', 'getFtoggleDir', 'getConfigs', 'write', 'bump', 'stage', 'commit']
     Given -> @utils.getFtoggleDir.andReturn '..'
     Given -> @config =
       environments: ['production']
+      configDir: 'config'
       production:
         path: 'ftoggle.json'
     Given -> @actions = jasmine.createSpyObj 'actions', ['init', 'add']
@@ -36,8 +37,8 @@ describe 'cli main', ->
       Given -> @utils.commit.andCallFake (cb) ->
         @check += 'commit'
         cb()
-      Given -> @utils.add.andCallFake (cb) ->
-        @check += 'gitadd'
+      Given -> @utils.stage.andCallFake (cb) ->
+        @check += 'stage'
         cb()
       Given -> @utils.write.andCallFake (cb) ->
         @check += 'write'
@@ -58,6 +59,7 @@ describe 'cli main', ->
         When -> @subject.takeAction @options
         Then -> expect(@options.ftoggle).toEqual
           environments: ['production']
+          configDir: 'config'
           production:
             path: 'ftoggle.json'
             config:
@@ -71,18 +73,19 @@ describe 'cli main', ->
           _name: 'add'
           check: ''
           bump: true
-          add: true
+          stage: true
           commit: true
         When -> @subject.takeAction @options
         Then -> expect(@options.ftoggle).toEqual
           environments: ['production']
+          configDir: 'config'
           production:
             path: 'ftoggle.json'
             config:
               version: 1
         And -> expect(@options.modified).toEqual []
         And -> expect(@utils.exit).toHaveBeenCalled()
-        And -> expect(@options.check).toBe 'addbumpwritegitaddcommit'
+        And -> expect(@options.check).toBe 'addbumpwritestagecommit'
 
       context 'with commit and not add', ->
         Given -> @options =
@@ -92,13 +95,14 @@ describe 'cli main', ->
         When -> @subject.takeAction @options
         Then -> expect(@options.ftoggle).toEqual
           environments: ['production']
+          configDir: 'config'
           production:
             path: 'ftoggle.json'
             config:
               version: 1
         And -> expect(@options.modified).toEqual []
         And -> expect(@utils.exit).toHaveBeenCalled()
-        And -> expect(@options.check).toBe 'addwritegitaddcommit'
+        And -> expect(@options.check).toBe 'addwritestagecommit'
 
     describe 'init', ->
       context 'correct options', ->

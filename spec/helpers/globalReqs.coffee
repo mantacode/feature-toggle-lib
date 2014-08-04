@@ -1,3 +1,2 @@
-# Initialize colors
-require 'colors'
+# Initialize underscore
 require('underscore').mixin require('safe-obj')

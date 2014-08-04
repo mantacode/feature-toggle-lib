@@ -5,6 +5,7 @@ actions = require './actions'
 _ = require 'underscore'
 async = require 'async'
 extend = require 'config-extend'
+chalk = require 'chalk'
 
 program.usage('<command> [feature] [options]')
 
@@ -15,7 +16,7 @@ catch
 
 #  Don't try to do everything else unless we have a config or we're initializing
 if !config && !~process.argv.join(' ').indexOf 'ftoggle init'
-  utils.writeBlock 'Unable to locate configuration information about this repository.', 'If you have not done so, you can run ' + 'ftoggle init'.grey + ' to configure ftoggle for this repository.'
+  utils.writeBlock 'Unable to locate configuration information about this repository.', "If you have not done so, you can run #{chalk.gray('ftoggle init')} to configure ftoggle for this repository."
   return process.exit()
 
 version = null
@@ -31,7 +32,7 @@ program.version(version || require('../package').version)
 program.name = 'ftoggle'
 
 #  Add some shortcuts to the options that every command has
-program.Command.prototype.add = ->
+program.Command.prototype.stage = ->
   @option('-s, --stage [env|list]', 'Stage the changes [for a given env only]', coerce.collect)
 
 program.Command.prototype.bump = ->
@@ -47,7 +48,7 @@ program.Command.prototype.dryRun = ->
   @option('--dry-run', 'Write changes to console instead of the config files')
 
 program.Command.prototype.common = ->
-  @add().bump().commit().envs().dryRun()
+  @stage().bump().commit().envs().dryRun()
 
 takeAction = program.takeAction = (args...) ->
   options = args.pop()
@@ -56,7 +57,7 @@ takeAction = program.takeAction = (args...) ->
   fns = [ actions[options._name] ]
   fns.unshift utils.bump if options.bump
   fns.unshift utils.write
-  fns.unshift utils.add if options.add or options.commit
+  fns.unshift utils.stage if options.stage or options.commit
   fns.unshift utils.commit if options.commit
   fn = async.compose.apply async, fns
   fn.apply options, args.concat(utils.exit)

@@ -17,8 +17,12 @@ describe 'actions', ->
     When -> @subject.init undefined, @options
     Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'banana/node_modules/feature-toggle-lib/.ftoggle.config.json', JSON.stringify(
       environments: ['foo', 'bar']
-      foo: '../../config/ftoggle.foo.json'
-      bar: '../../config/ftoggle.bar.json'
+      configDir: 'banana/config'
+      name: 'banana'
+      foo:
+        path: '../../config/ftoggle.foo.json'
+      bar:
+        path: '../../config/ftoggle.bar.json'
     , null, 2), jasmine.any(Function)
     And -> expect(@fs.writeFile).toHaveBeenCalledWith 'banana/config/ftoggle.foo.json', JSON.stringify(
       version: 1
