@@ -24,5 +24,5 @@ module.exports = class BuildsFeatureVals
     #private
 
     confFor: (toggleConfig) ->
-      if toggleConfig.conf? then toggleConfig.conf else {}
+      if toggleConfig?.conf? then toggleConfig.conf else {}
 
