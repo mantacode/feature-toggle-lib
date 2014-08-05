@@ -78,6 +78,7 @@ program
   .description('Add a new feature to ftoggle')
   .common()
   .option('-E, --enable [name|list]', 'Set traffic to 1 in these configs', coerce.collect)
+  .option('-s, --split-plan <name>', 'Method for handling exclusive splits in feature path (one of on, off, split, or prompt)', 'split')
   .action(takeAction)
 
 if ~process.argv[1].indexOf('ftoggle')

@@ -138,6 +138,7 @@ describe 'cli main', ->
           -e, --env <name|list>
           --dry-run
           -E, --enable [name|list]
+          -s, --split-plan <name>
         """
         And -> expect(_(@cmd.options).pluck('description').join('\n')).toBe """
           Stage the changes [for a given env only]
@@ -146,6 +147,7 @@ describe 'cli main', ->
           List of environments to apply the change to
           Write changes to console instead of the config files
           Set traffic to 1 in these configs
+          Method for handling exclusive splits in feature path (one of on, off, split, or prompt)
         """
         And -> expect(@cmd._args).toEqual [
           required: true

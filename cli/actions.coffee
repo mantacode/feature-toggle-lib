@@ -42,7 +42,8 @@ exports.init = (name, options) ->
 exports.add = (feature, cb) ->
   async.each @env, (env, next) =>
     if @ftoggle[env]
-      utils.expand(@ftoggle[env].config.features, feature, { traffic: 1 })
+      traffic = if @enable == true or (@enable? and env in @enable) then 1 else 0
+      utils.expand(@ftoggle[env].config.features, feature, { traffic: traffic }, @splitPlan)
       @modified.push(env)
     next()
   , =>

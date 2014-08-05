@@ -5,6 +5,15 @@ async = require 'async'
 fs = require 'fs'
 cp = require 'child_process'
 chalk = require 'chalk'
+readline = require 'readline'
+rl = null
+
+exports.getInterface = ->
+  rl = rl or readline.createInterface({ input: process.stdin, output: process.stdout })
+  return rl
+
+exports.closeInterface = ->
+  rl?.close()
 
 exports.writeBlock = (msgs...) ->
   console.log()
@@ -22,13 +31,15 @@ exports.getRoot = ->
 exports.exit = (err) ->
   if err
     @writeBlock err
-    process.exit(1)
+    process.exit 1
   else
-    process.exit(0)
+    process.exit 0
 
 exports.expand = (obj, path, val) ->
   parts = path.split('.')
   expandPath = parts.shift()
+  if splitPlan == 'prompt'
+    rl = exports.getInterface()
 
   while parts.length
     if !_(obj).safe(expandPath)

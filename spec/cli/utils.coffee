@@ -7,6 +7,7 @@ describe 'cli utils', ->
   Given -> @path = jasmine.createSpyObj 'path', ['resolve', 'dirname']
   Given -> @fs = jasmine.createSpyObj 'fs', ['writeFile']
   Given -> @cp = jasmine.createSpyObj 'child_process', ['spawn']
+  Given -> @readline = jasmine.createSpyObj 'readline', ['createInterface']
   Given -> @subject = requireSubject 'cli/utils',
     resolve: @resolve
     path: @path
@@ -15,8 +16,18 @@ describe 'cli utils', ->
     underscore: _
     fs: @fs
     child_process: @cp
-  ,
-    String: String
+    readline: @readline
+
+  describe '.getInterface', ->
+    Given -> @readline.createInterface.when(jasmine.any(Object)).thenReturn 'interface'
+    Then -> expect(@subject.getInterface()).toBe 'interface'
+
+  describe '.closeInterface', ->
+    Given -> @rl = jasmine.createSpyObj 'rl', ['close']
+    Given -> @readline.createInterface.andReturn @rl
+    When -> @subject.getInterface()
+    And -> @subject.closeInterface()
+    Then -> expect(@rl.close).toHaveBeenCalled()
 
   describe '.writeBlock', ->
     Given -> spyOn console, 'log'
@@ -45,18 +56,113 @@ describe 'cli utils', ->
       Then -> expect(@subject.writeBlock).toHaveBeenCalledWith 'err'
       And -> expect(process.exit).toHaveBeenCalledWith 1
 
-  describe '.expand', ->
-    Given -> @obj = {}
-    When -> @subject.expand @obj, 'foo.bar.baz', { traffic: 1 }
-    Then -> expect(@obj).toEqual
-      foo:
-        traffic: 1
-        features:
-          bar:
-            traffic: 1
-            features:
-              baz:
-                traffic: 1
+  #describe '.expand', ->
+    #context 'no exclusive split', ->
+      #Given -> @obj = {}
+      #When -> @subject.expand @obj, 'foo.bar.baz', { traffic: 1 }
+      #Then -> expect(@obj).toEqual
+        #foo:
+          #traffic: 1
+          #features:
+            #bar:
+              #traffic: 1
+              #features:
+                #baz:
+                  #traffic: 1
+
+      #context 'with exclusive split', ->
+        #context 'plan: on', ->
+          #Given -> @obj =
+            #foo:
+              #exclusiveSplit: true
+              #traffic: 1
+              #features:
+                #bar:
+                  #traffic: 0.25
+                #baz:
+                  #traffic: 0.25
+                #quux:
+                  #traffic: 0.25
+                #blah:
+                  #traffic: 0.25
+          #When -> @subject.expand @obj, 'foo.bazinga', { traffic: 1 }, 'on'
+          #Then -> expect(@obj).toEqual
+            #foo:
+              #exclusiveSplit: true
+              #traffic: 1
+              #features:
+                #bar:
+                  #traffic: 0
+                #baz:
+                  #traffic: 0
+                #quux:
+                  #traffic: 0
+                #blah:
+                  #traffic: 0
+                #bazinga:
+                  #traffic: 1
+
+        #context 'plan: off', ->
+          #Given -> @obj =
+            #foo:
+              #exclusiveSplit: true
+              #traffic: 1
+              #features:
+                #bar:
+                  #traffic: 0.25
+                #baz:
+                  #traffic: 0.25
+                #quux:
+                  #traffic: 0.25
+                #blah:
+                  #traffic: 0.25
+          #When -> @subject.expand @obj, 'foo.bazinga', { traffic: 1 }, 'off'
+          #Then -> expect(@obj).toEqual
+            #foo:
+              #exclusiveSplit: true
+              #traffic: 1
+              #features:
+                #bar:
+                  #traffic: 0.25
+                #baz:
+                  #traffic: 0.25
+                #quux:
+                  #traffic: 0.25
+                #blah:
+                  #traffic: 0.25
+                #bazinga:
+                  #traffic: 0
+        
+        #context 'plan: split', ->
+          #Given -> @obj =
+            #foo:
+              #exclusiveSplit: true
+              #traffic: 1
+              #features:
+                #bar:
+                  #traffic: 0.25
+                #baz:
+                  #traffic: 0.25
+                #quux:
+                  #traffic: 0.25
+                #blah:
+                  #traffic: 0.25
+          #When -> @subject.expand @obj, 'foo.bazinga', { traffic: 1 }, 'on'
+          #Then -> expect(@obj).toEqual
+            #foo:
+              #exclusiveSplit: true
+              #traffic: 1
+              #features:
+                #bar:
+                  #traffic: 0.2
+                #baz:
+                  #traffic: 0.2
+                #quux:
+                  #traffic: 0.2
+                #blah:
+                  #traffic: 0.2
+                #bazinga:
+                  #traffic: 0.2
 
   describe '.bump', ->
     Given -> @options =
