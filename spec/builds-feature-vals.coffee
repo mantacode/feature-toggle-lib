@@ -1,4 +1,4 @@
-describe.only "Builds Feature Vals", ->
+describe "Builds Feature Vals", ->
   Given -> @subject = new (requireSubject 'lib/builds-feature-vals')
 
   describe "you got what I need", ->
