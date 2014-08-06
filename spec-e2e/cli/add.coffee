@@ -1,4 +1,4 @@
-describe 'add', ->
+describe.only 'add', ->
   context 'top level feature', ->
     When (done) -> runCmd('ftoggle add banana', __dirname, done)
     And -> @foo = require './ftoggle.foo'
