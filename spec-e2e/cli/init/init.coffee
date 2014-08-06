@@ -3,11 +3,11 @@ path = require 'path'
 fs = require 'fs'
 
 describe 'init', ->
-  afterEach -> fs.unlinkSync "#{__dirname}/node_modules/feature-toggle-lib/.ftoggle.config.json"
+  afterEach -> fs.unlinkSync "#{__dirname}/node_modules/ftoggle/.ftoggle.config.json"
   afterEach -> fs.unlinkSync "#{__dirname}/ftoggle.foo.json"
   afterEach -> fs.unlinkSync "#{__dirname}/ftoggle.bar.json"
   When (done) -> runCmd('ftoggle init banana -e foo -e bar -c ./', __dirname, done)
-  And -> @ftConfig = require "#{__dirname}/node_modules/feature-toggle-lib/.ftoggle.config"
+  And -> @ftConfig = require "#{__dirname}/node_modules/ftoggle/.ftoggle.config"
   And -> @foo = require "#{__dirname}/ftoggle.foo"
   And -> @bar = require "#{__dirname}/ftoggle.bar"
   Then -> expect(@ftConfig).toEqual

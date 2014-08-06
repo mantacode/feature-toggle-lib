@@ -11,7 +11,7 @@ exports.init = (name, options) ->
   options.env = if options.env.length then options.env else [ 'production', 'development' ]
   options.name = name || options.name || path.basename(root)
   options.configDir = path.normalize("#{root}/#{(options.configDir || 'config')}")
-  ftoggleDir = "#{root}/node_modules/feature-toggle-lib"
+  ftoggleDir = "#{root}/node_modules/ftoggle"
   
   #Ftoggle config
   config =

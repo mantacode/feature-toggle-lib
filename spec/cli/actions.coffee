@@ -15,7 +15,7 @@ describe 'actions', ->
       configDir: 'config'
       name: 'banana'
     When -> @subject.init undefined, @options
-    Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'banana/node_modules/feature-toggle-lib/.ftoggle.config.json', JSON.stringify(
+    Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'banana/node_modules/ftoggle/.ftoggle.config.json', JSON.stringify(
       environments: ['foo', 'bar']
       configDir: 'banana/config'
       name: 'banana'
