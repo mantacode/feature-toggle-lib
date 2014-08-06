@@ -2,7 +2,7 @@ cp = require 'child_process'
 path = require 'path'
 fs = require 'fs'
 
-describe.only 'init', ->
+describe 'init', ->
   afterEach -> fs.unlinkSync "#{__dirname}/node_modules/ftoggle/.ftoggle.config.json"
   afterEach -> fs.unlinkSync "#{__dirname}/ftoggle.foo.json"
   afterEach -> fs.unlinkSync "#{__dirname}/ftoggle.bar.json"
