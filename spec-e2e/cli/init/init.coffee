@@ -12,8 +12,12 @@ describe 'init', ->
   And -> @bar = require "#{__dirname}/ftoggle.bar"
   Then -> expect(@ftConfig).toEqual
     environments: ['foo', 'bar']
-    foo: '../../ftoggle.foo.json'
-    bar: '../../ftoggle.bar.json'
+    configDir: path.resolve(__dirname) + '/'
+    name: 'banana'
+    foo:
+      path: '../../ftoggle.foo.json'
+    bar:
+      path: '../../ftoggle.bar.json'
   And -> expect(@foo).toEqual
     version: 1
     name: 'banana-foo'

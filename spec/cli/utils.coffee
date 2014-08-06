@@ -37,11 +37,20 @@ describe 'cli utils', ->
     ]
 
   describe '.getRoot', ->
-    Given -> @resolve.sync.when('feature-toggle-lib/package.json', { basedir: process.cwd() }).thenReturn 'resolved'
-    Given -> @path.dirname.when('resolved').thenReturn 'dirnamed'
-    Given -> @path.resolve.when('dirnamed', '..', '..').thenReturn 'absolute path'
-    When -> @res = @subject.getRoot()
-    Then -> expect(@res).toBe 'absolute path'
+    context 'ftoggle installed', ->
+      Given -> @resolve.sync.when('ftoggle/package.json', { basedir: process.cwd() }).thenReturn 'resolved'
+      Given -> @path.dirname.when('resolved').thenReturn 'dirnamed'
+      Given -> @path.resolve.when('dirnamed', '..', '..').thenReturn 'absolute path'
+      When -> @res = @subject.getRoot()
+      Then -> expect(@res).toBe 'absolute path'
+
+    context 'ftoggle not installed', ->
+      Given -> spyOn @subject, 'exit'
+      Given -> spyOn @subject, 'writeBlock'
+      Given -> @resolve.sync.when('ftoggle/package.json', { basedir: process.cwd() }).thenCallFake -> throw new Error('HOLY ERROR BATMAN!')
+      When -> @subject.getRoot()
+      Then -> expect(@subject.writeBlock).toHaveBeenCalledWith chalk.red('Unable to locate local ftoggle installation.'), "Run #{chalk.gray('npm install ftoggle --save')} followed by #{chalk.gray('ftoggle init')} to get started."
+      And -> expect(@subject.exit).toHaveBeenCalled()
 
   describe '.exit', ->
     Given -> spyOn process, 'exit'

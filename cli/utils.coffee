@@ -21,8 +21,12 @@ exports.writeBlock = (msgs...) ->
   console.log()
 
 exports.getFtoggleDir = ->
-  pkg = resolve.sync 'feature-toggle-lib/package.json', { basedir: process.cwd() }
-  return path.dirname(pkg)
+  try
+    pkg = resolve.sync 'ftoggle/package.json', { basedir: process.cwd() }
+    return path.dirname(pkg)
+  catch e
+    exports.writeBlock chalk.red('Unable to locate local ftoggle installation.'), "Run #{chalk.gray('npm install ftoggle --save')} followed by #{chalk.gray('ftoggle init')} to get started."
+    exports.exit()
 
 exports.getRoot = ->
   ftoggleLib = @getFtoggleDir()
@@ -30,7 +34,7 @@ exports.getRoot = ->
 
 exports.exit = (err) ->
   if err
-    @writeBlock err
+    exports.writeBlock err
     process.exit 1
   else
     process.exit 0

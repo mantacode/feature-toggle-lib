@@ -6,12 +6,14 @@ _ = require 'underscore'
 async = require 'async'
 extend = require 'config-extend'
 chalk = require 'chalk'
+path = require 'path'
 
 program.usage('<command> [feature] [options]')
 
 #  Try to get the ftoggle config
 try
-  config = require("#{utils.getFtoggleDir()}/.ftoggle.config")
+  ftoggleDir = utils.getFtoggleDir()
+  config = require("#{ftoggleDir}/.ftoggle.config")
 catch
 
 #  Don't try to do everything else unless we have a config or we're initializing
@@ -23,8 +25,8 @@ version = null
 
 #  Get the config for each environment
 if config
-  _(config.environments).each (env) ->
-    config[env].config = require config[env].path
+  for env in config.environments
+    config[env].config = require path.resolve(ftoggleDir, config[env].path)
     version = version || config[env].config.version
 
 program.version(version || require('../package').version)
@@ -32,23 +34,23 @@ program.version(version || require('../package').version)
 program.name = 'ftoggle'
 
 #  Add some shortcuts to the options that every command has
-program.Command.prototype.stage = ->
+program.Command.prototype._stage = ->
   @option('-s, --stage [env|list]', 'Stage the changes [for a given env only]', coerce.collect)
 
-program.Command.prototype.bump = ->
+program.Command.prototype._bump = ->
   @option('-b, --bump', 'Bump the version')
 
-program.Command.prototype.commit = ->
+program.Command.prototype._commit = ->
   @option('-c, --commit [env|list]', 'Commit the changes [for a given env only]', coerce.collect)
 
-program.Command.prototype.envs = ->
+program.Command.prototype._envs = ->
   @option('-e, --env <name|list>', 'List of environments to apply the change to', coerce.collect, [])
 
-program.Command.prototype.dryRun = ->
+program.Command.prototype._dryRun = ->
   @option('--dry-run', 'Write changes to console instead of the config files')
 
-program.Command.prototype.common = ->
-  @stage().bump().commit().envs().dryRun()
+program.Command.prototype.addCommonOptions = ->
+  @_stage()._bump()._commit()._envs()._dryRun()
 
 takeAction = program.takeAction = (args...) ->
   options = args.pop()
@@ -76,7 +78,7 @@ program
 program
   .command('add <feature>')
   .description('Add a new feature to ftoggle')
-  .common()
+  .addCommonOptions()
   .option('-E, --enable [name|list]', 'Set traffic to 1 in these configs', coerce.collect)
   .option('-s, --split-plan <name>', 'Method for handling exclusive splits in feature path (one of on, off, split, or prompt)', 'split')
   .action(takeAction)

@@ -1,9 +1,8 @@
 fs = require 'fs'
+cp = require 'child_process'
+sha = null
+cp.spawn('git', ['rev-parse', '--short', 'HEAD']).on 'data', (data) ->
+  sha = data.toString()
 
-# Require is relative to the current file
-foo = require '../cli/ftoggle.foo'
-bar = require '../cli/ftoggle.bar'
-
-# fs is relative to cwd
-afterEach -> fs.writeFileSync './spec-e2e/cli/ftoggle.foo.json', JSON.stringify(foo, null, 2)
-afterEach -> fs.writeFileSync './spec-e2e/cli/ftoggle.bar.json', JSON.stringify(bar, null, 2)
+afterEach (done) -> cp.spawn('git', ['reset', sha]).on 'close', done
+afterEach (done) -> cp.spawn('git', ['checkout', 'spec-e2e/cli/ftoggle.*.json']).on 'close', done

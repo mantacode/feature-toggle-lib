@@ -6,4 +6,4 @@ describe 'add', ->
     Then -> expect(@foo.features).toEqual @bar.features
     And -> expect(@foo.features).toEqual
       banana:
-        traffic: 1
+        traffic: 0
