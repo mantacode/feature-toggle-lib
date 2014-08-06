@@ -15,6 +15,8 @@ describe 'cli main', ->
     Given -> spyOn process, 'exit'
     Given -> @utils = jasmine.createSpyObj 'utils', ['writeBlock', 'exit', 'getFtoggleDir', 'getConfigs', 'write', 'bump', 'stage', 'commit']
     Given -> @utils.getFtoggleDir.andReturn '..'
+    Given -> @path = jasmine.createSpyObj 'path', ['resolve']
+    Given -> @path.resolve.when('..', 'ftoggle.json').thenReturn 'banana crater'
     Given -> @config =
       environments: ['production']
       configDir: 'config'
@@ -25,7 +27,8 @@ describe 'cli main', ->
       './utils': @utils
       './actions': @actions
       '../.ftoggle.config': @config
-      'ftoggle.json': { version: 1 }
+      'banana crater': { version: 1 }
+      path: @path
 
     describe 'name', ->
       Then -> expect(@subject.name).toBe 'ftoggle'
