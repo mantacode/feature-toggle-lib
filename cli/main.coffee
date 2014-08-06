@@ -26,7 +26,8 @@ version = null
 #  Get the config for each environment
 if config
   for env in config.environments
-    config[env].config = require path.resolve(ftoggleDir, config[env].path)
+    try
+      config[env].config = require path.resolve(ftoggleDir, config[env].path)
     version = version || config[env].config.version
 
 program.version(version || require('../package').version)
