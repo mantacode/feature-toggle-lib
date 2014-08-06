@@ -185,30 +185,33 @@ describe 'cli utils', ->
           config:
             version: 3
     Given -> @cb = jasmine.createSpy 'cb'
-    When -> @subject.bump.apply @options, ['feature', 'traffic', @cb]
-    Then -> expect(@options.ftoggle.banana.config.version).toEqual 4
-    And -> expect(@options.ftoggle.pear.config.version).toEqual 4
-    And -> expect(@options.modified).toEqual ['apple', 'banana', 'pear']
-    And -> expect(@cb).toHaveBeenCalledWith undefined, 'feature', 'traffic'
+    
+    context 'no version set', ->
+      When -> @subject.bump.apply @options, ['feature', 'traffic', 'banana', @cb]
+      Then -> expect(@options.ftoggle.banana.config.version).toEqual 4
+      And -> expect(@options.modified).toEqual ['apple', 'banana']
+      And -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic', 'banana'
+
+    context 'version set', ->
+      Given -> @options.ftoggleVersion = 7
+      When -> @subject.bump.apply @options, ['feature', 'traffic', 'banana', @cb]
+      Then -> expect(@options.ftoggle.banana.config.version).toEqual 7
+      And -> expect(@options.modified).toEqual ['apple', 'banana']
+      And -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic', 'banana'
+      
 
   describe '.write', ->
     Given -> @options =
-      modified: ['banana', 'pear', 'banana']
       configDir: 'config'
       ftoggle:
         banana:
           config:
             version: 1
-        pear:
-          config:
-            version: 1
     Given -> @cb = jasmine.createSpy 'cb'
     Given -> @fs.writeFile.andCallFake (path, obj, cb) -> cb()
-    When -> @subject.write.apply @options, ['feature', 'traffic', @cb]
+    When -> @subject.write.apply @options, ['feature', 'traffic', 'banana', @cb]
     Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'config/ftoggle.banana.json', JSON.stringify(version: 1), jasmine.any(Function)
-    And -> expect(@fs.writeFile).toHaveBeenCalledWith 'config/ftoggle.pear.json', JSON.stringify(version: 1), jasmine.any(Function)
-    And -> expect(@fs.writeFile.callCount).toBe 2
-    And -> expect(@cb).toHaveBeenCalledWith undefined, 'feature', 'traffic'
+    And -> expect(@cb).toHaveBeenCalledWith undefined, 'feature', 'traffic', 'banana'
 
   describe '.stage', ->
     Given -> @add = new EventEmitter()

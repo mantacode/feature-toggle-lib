@@ -39,13 +39,9 @@ exports.init = (name, options) ->
 
   async.parallel funcs, utils.exit
 
-exports.add = (feature, cb) ->
-  async.each @env, (env, next) =>
-    if @ftoggle[env]
-      traffic = if @enable == true or (@enable? and env in @enable) then 1 else 0
-      utils.expand(@ftoggle[env].config.features, feature, { traffic: traffic }, @splitPlan)
-      @modified.push(env)
-    next()
-  , =>
-    @commitMsg = "Added ftoggle feature #{feature} to #{list(@modified)}"
-    cb(null, feature)
+exports.add = (feature, env, cb) ->
+  if @ftoggle[env]
+    traffic = if @enable == true or (@enable? and env in @enable) then 1 else 0
+    utils.expand(@ftoggle[env].config.features, feature, { traffic: traffic }, @splitPlan)
+    @modified.push(env)
+  cb(null, feature, env)

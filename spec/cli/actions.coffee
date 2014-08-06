@@ -37,57 +37,49 @@ describe 'actions', ->
     And -> expect(@utils.exit).toHaveBeenCalled()
 
   describe '.add', ->
-    Given -> spyOn(global, 'setImmediate').andCallFake (f) -> f()
     Given -> @cb = jasmine.createSpy 'cb'
     context 'with existing config env', ->
       context 'enable is true', ->
         Given -> @options =
-          env: ['env']
           enable: true
           modified: []
           ftoggle:
             env:
               config:
                 features: {}
-        When -> @subject.add.apply @options, ['foo.bar', @cb]
+        When -> @subject.add.apply @options, ['foo.bar', 'env', @cb]
         Then -> expect(@utils.expand).toHaveBeenCalledWith {}, 'foo.bar', { traffic: 1 }, undefined
         And -> expect(@options.modified).toEqual ['env']
-        And -> expect(@options.commitMsg).toBe 'Added ftoggle feature foo.bar to env'
-        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar'
+        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar', 'env'
 
       context 'enable is false', ->
         Given -> @options =
-          env: ['env']
           enable: false
           modified: []
           ftoggle:
             env:
               config:
                 features: {}
-        When -> @subject.add.apply @options, ['foo.bar', @cb]
+        When -> @subject.add.apply @options, ['foo.bar', 'env', @cb]
         Then -> expect(@utils.expand).toHaveBeenCalledWith {}, 'foo.bar', { traffic: 0 }, undefined
         And -> expect(@options.modified).toEqual ['env']
-        And -> expect(@options.commitMsg).toBe 'Added ftoggle feature foo.bar to env'
-        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar'
+        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar', 'env'
 
       context 'enable includes env', ->
         Given -> @options =
-          env: ['env']
           enable: ['env']
           modified: []
           ftoggle:
             env:
               config:
                 features: {}
-        When -> @subject.add.apply @options, ['foo.bar', @cb]
+        When -> @subject.add.apply @options, ['foo.bar', 'env', @cb]
         Then -> expect(@utils.expand).toHaveBeenCalledWith {}, 'foo.bar', { traffic: 1 }, undefined
         And -> expect(@options.modified).toEqual ['env']
-        And -> expect(@options.commitMsg).toBe 'Added ftoggle feature foo.bar to env'
-        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar'
+        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar', 'env'
 
       context 'enable does not includes env', ->
         Given -> @options =
-          env: ['env']
           enable: ['visagoths']
           splitPlan: 'vikings'
           modified: []
@@ -95,35 +87,31 @@ describe 'actions', ->
             env:
               config:
                 features: {}
-        When -> @subject.add.apply @options, ['foo.bar', @cb]
+        When -> @subject.add.apply @options, ['foo.bar', 'env', @cb]
         Then -> expect(@utils.expand).toHaveBeenCalledWith {}, 'foo.bar', { traffic: 0 }, 'vikings'
         And -> expect(@options.modified).toEqual ['env']
-        And -> expect(@options.commitMsg).toBe 'Added ftoggle feature foo.bar to env'
-        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar'
+        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar', 'env'
 
       context 'enable is undefined', ->
         Given -> @options =
-          env: ['env']
           modified: []
           ftoggle:
             env:
               config:
                 features: {}
-        When -> @subject.add.apply @options, ['foo.bar', @cb]
+        When -> @subject.add.apply @options, ['foo.bar', 'env', @cb]
         Then -> expect(@utils.expand).toHaveBeenCalledWith {}, 'foo.bar', { traffic: 0 }, undefined
         And -> expect(@options.modified).toEqual ['env']
-        And -> expect(@options.commitMsg).toBe 'Added ftoggle feature foo.bar to env'
-        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar'
+        And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar', 'env'
 
     context 'with non-existent env', ->
       Given -> @options =
-        env: ['banana']
         modified: []
         ftoggle:
           env:
             config:
               features: {}
-      When -> @subject.add.apply @options, ['foo.bar', @cb]
+      When -> @subject.add.apply @options, ['foo.bar', 'banana', @cb]
       Then -> expect(@utils.expand).not.toHaveBeenCalled()
       And -> expect(@options.modified).toEqual []
-      And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar'
+      And -> expect(@cb).toHaveBeenCalledWith null, 'foo.bar', 'banana'

@@ -53,33 +53,24 @@ exports.expand = (obj, path, val) ->
   
   _(obj).expand(expandPath, val)
 
-exports.bump = (args...) ->
+exports.bump = (args..., env, cb) ->
   # Get the highest current version, in case they aren't all the same
-  version = _.chain(@environments).map( (e) => @ftoggle[e].config.version ).max().value() + 1
-  cb = args.pop()
-  async.each @environments, (env, next) =>
-    @ftoggle[env].config.version = version
-    @modified.push(env)
-    next()
-  , (err) ->
-    cb.apply null, [err].concat(args)
+  @ftoggleVersion = @ftoggleVersion || _.chain(@environments).map( (e) => @ftoggle[e].config.version ).max().value() + 1
+  @ftoggle[env].config.version = @ftoggleVersion
+  @modified.push(env)
+  cb.apply null, [null].concat(args).concat(env)
 
-exports.write = (args...) ->
-  cb = args.pop()
-  async.each _(@modified).uniq(), (env, next) =>
-    fs.writeFile "#{@configDir}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env].config), next
-  , (err) ->
-    cb.apply null, [err].concat(args)
+exports.write = (args..., env, cb) ->
+  fs.writeFile "#{@configDir}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env].config), (err) ->
+    cb.apply null, [err].concat(args).concat(env)
 
-exports.stage = (args...) ->
-  cb = args.pop()
+exports.stage = (args..., cb) ->
   files = if _(@stage).isArray() then _(@stage).map( (env) => "#{@configDir}/ftoggle.#{env}.json" ) else ["#{@configDir}/*"]
   add = cp.spawn 'git', ['add'].concat(files)
   add.on 'close', (code) =>
     cb.apply null, [if code then exports.failedCmdMessage("git add #{files.join(' ')}", code) else null].concat(args)
 
-exports.commit = (args...) ->
-  cb = args.pop()
+exports.commit = (args..., cb) ->
   commit = cp.spawn 'git', ['commit', '-m', @commitMsg]
   commit.on 'close', (code) =>
     cb.apply null, [if code then exports.failedCmdMessage("git commit -m '#{@commitMsg}'", code) else null].concat(args)

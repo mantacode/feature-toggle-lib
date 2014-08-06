@@ -52,18 +52,23 @@ program.Command.prototype._dryRun = ->
 program.Command.prototype.addCommonOptions = ->
   @_stage()._bump()._commit()._envs()._dryRun()
 
-takeAction = program.takeAction = (args...) ->
-  options = args.pop()
+takeAction = program.takeAction = (args..., options) ->
   options.ftoggle = config
   options.modified = []
+  options.stage = options.stage or options.commit
   fns = [ actions[options._name] ]
-  options.stage = options.commit if options.commit and not options.stage
   fns.unshift utils.bump if options.bump
   fns.unshift utils.write
-  fns.unshift utils.stage if options.stage
-  fns.unshift utils.commit if options.commit
-  fn = async.compose.apply async, fns
-  fn.apply options, args.concat(utils.exit)
+  iterate = async.compose.apply async, fns
+  fns = []
+  fns.push utils.commit if options.commit
+  fns.push utils.stage if options.stage
+  finalize = async.compose.apply async, fns
+  async.each options.env, iterate.bind.apply(iterate, [options].concat(args)), (err) ->
+    if err
+      utils.exit(err)
+    else
+      finalize.apply options, args.concat(utils.exit)
 
 #  Tell ftoggle about where things are
 program

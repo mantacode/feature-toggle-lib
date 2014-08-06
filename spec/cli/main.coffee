@@ -37,28 +37,31 @@ describe 'cli main', ->
       Then -> expect(@subject.version()).toBe 1
 
     describe '.takeAction', ->
+      Given -> spyOn(global, 'setImmediate').andCallFake (f) -> f()
       Given -> @utils.commit.andCallFake (cb) ->
-        @check += 'commit'
+        @check.push 'commit'
         cb()
       Given -> @utils.stage.andCallFake (cb) ->
-        @check += 'stage'
+        @check.push 'stage'
         cb()
-      Given -> @utils.write.andCallFake (cb) ->
-        @check += 'write'
-        cb()
-      Given -> @utils.bump.andCallFake (cb) ->
-        @check += 'bump'
-        cb()
-      Given -> @actions.add.andCallFake (cb) ->
-        @check += 'add'
-        cb()
-      Given -> @options =
-        _name: 'add'
-        check: ''
+      Given -> @utils.write.andCallFake (env, cb) ->
+        @check.push 'write'
+        @check.push env
+        cb(null, env)
+      Given -> @utils.bump.andCallFake (env, cb) ->
+        @check.push 'bump'
+        @check.push env
+        cb(null, env)
+      Given -> @actions.add.andCallFake (env, cb) ->
+        @check.push 'add'
+        @check.push env
+        cb(null, env)
+
       context 'base options', ->
         Given -> @options =
           _name: 'add'
-          check: ''
+          check: []
+          env: ['banana']
         When -> @subject.takeAction @options
         Then -> expect(@options.ftoggle).toEqual
           environments: ['production']
@@ -69,12 +72,13 @@ describe 'cli main', ->
               version: 1
         And -> expect(@options.modified).toEqual []
         And -> expect(@utils.exit).toHaveBeenCalled()
-        And -> expect(@options.check).toBe 'addwrite'
+        And -> expect(@options.check).toEqual ['add', 'banana', 'write', 'banana']
 
       context 'with all options', ->
         Given -> @options =
           _name: 'add'
-          check: ''
+          check: []
+          env: ['banana']
           bump: true
           stage: true
           commit: true
@@ -88,12 +92,13 @@ describe 'cli main', ->
               version: 1
         And -> expect(@options.modified).toEqual []
         And -> expect(@utils.exit).toHaveBeenCalled()
-        And -> expect(@options.check).toBe 'addbumpwritestagecommit'
+        And -> expect(@options.check).toEqual ['add', 'banana', 'bump', 'banana', 'write', 'banana', 'stage', 'commit']
 
       context 'with commit and not add', ->
         Given -> @options =
           _name: 'add'
-          check: ''
+          check: []
+          env: ['banana']
           commit: true
         When -> @subject.takeAction @options
         Then -> expect(@options.ftoggle).toEqual
@@ -106,7 +111,7 @@ describe 'cli main', ->
         And -> expect(@options.modified).toEqual []
         And -> expect(@utils.exit).toHaveBeenCalled()
         And -> expect(@options.stage).toBe true
-        And -> expect(@options.check).toBe 'addwritestagecommit'
+        And -> expect(@options.check).toEqual ['add', 'banana', 'write', 'banana', 'stage', 'commit']
 
     describe 'init', ->
       context 'correct options', ->
