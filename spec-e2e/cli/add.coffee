@@ -64,3 +64,4 @@ describe.only 'add', ->
     And (done) ->
       ftoggleDiff (err, diff) ->
         expect(diff).toContain "banana"
+        done()
