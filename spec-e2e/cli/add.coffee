@@ -1,4 +1,4 @@
-describe.only 'add', ->
+describe 'add', ->
   context 'top level feature', ->
     When (done) -> runCmd('ftoggle add banana', __dirname, done)
     And -> @foo = require './ftoggle.foo'
@@ -52,7 +52,7 @@ describe.only 'add', ->
       banana:
         traffic: 1
 
-  context 'enable with multiple flags, bump, stage, and commit', ->
+  context.only 'enable with multiple flags, bump, stage, and commit', ->
     When (done) -> runCmd('ftoggle add banana -bsc -E foo -E bar', __dirname, done)
     And -> @foo = require './ftoggle.foo'
     And -> @bar = require './ftoggle.bar'
@@ -63,5 +63,5 @@ describe.only 'add', ->
     And -> expect(@foo.version).toEqual 2
     And (done) ->
       ftoggleDiff (err, diff) ->
-        expect(diff).toContain chalk.green('+ "version": 2, + "features": { + "banana": { + "traffic": 1 + } + } +}')
+        expect(diff).toContain '+ "version": 2, + "features": { + "banana": { + "traffic": 1 + } + } +}'
         done()
