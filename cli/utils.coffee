@@ -59,7 +59,7 @@ exports.expand = (obj, path, val) ->
 
 exports.bump = (args..., env, cb) ->
   # Get the highest current version, in case they aren't all the same
-  @ftoggleVersion = @ftoggleVersion || _.chain(@environments).map( (e) => @ftoggle[e].version ).max().value() + 1
+  @ftoggleVersion = @ftoggleVersion || _.chain(@ftoggle.environments).map( (e) => @ftoggle[e].version ).max().value() + 1
   @ftoggle[env].version = @ftoggleVersion
   @modified.push(env)
   cb.apply null, [null].concat(args).concat(env)

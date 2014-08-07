@@ -188,9 +188,9 @@ describe 'cli utils', ->
 
   describe '.bump', ->
     Given -> @options =
-      environments: ['banana', 'pear']
       modified: ['apple']
       ftoggle:
+        environments: ['banana', 'pear']
         banana:
           version: 2
         pear:
