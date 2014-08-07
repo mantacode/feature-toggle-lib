@@ -5,7 +5,14 @@ module.exports = (grunt) ->
 
   grunt.initConfig
     spec:
-      unit: {}
+      unit:
+        options:
+          helpers: "spec/helpers/**/*.{js,coffee}"
+          specs: "spec/**/*.{js,coffee}"
+      e2e:
+        options:
+          helpers: "spec/helpers/**/*.{js,coffee}"
+          specs: "spec-e2e/**/*.{js,coffee}"
 
-  grunt.registerTask("default", ["spec:unit"])
+  grunt.registerTask("default", ["spec:unit", "spec:e2e"])
 
