@@ -59,7 +59,7 @@ describe 'init', ->
     And -> @development = require "#{__dirname}/config/ftoggle.development"
     Then -> expect(@ftConfig).toEqual
       environments: ['production', 'development']
-      configDir: 'config'
+      configDir: './config'
       name: 'init'
     And -> expect(@production).toEqual
       version: 1

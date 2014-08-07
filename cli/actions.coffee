@@ -6,6 +6,8 @@ utils = require './utils'
 exports.init = (name, options) ->
   root = utils.getRoot()
   name = name || options.name || path.basename(root)
+  options.env = if options.env.length then options.env else [ 'production', 'development' ]
+  options.configDir = options.configDir || "./config"
   async.each options.env, (env, next) ->
     fs.writeFile "#{root}/#{options.configDir}/ftoggle.#{env}.json", JSON.stringify(
       version: 1
@@ -17,8 +19,8 @@ exports.init = (name, options) ->
       utils.exit(err)
     else
       fs.writeFile "#{root}/node_modules/ftoggle/.ftoggle.config.json", JSON.stringify(
-        environments: if options.env.length then options.env else [ 'production', 'development' ]
-        configDir: options.configDir || "./config"
+        environments: options.env
+        configDir: options.configDir
         name: name
       , null, 2), utils.exit
 

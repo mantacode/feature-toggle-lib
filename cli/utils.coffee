@@ -59,18 +59,18 @@ exports.expand = (obj, path, val) ->
 
 exports.bump = (args..., env, cb) ->
   # Get the highest current version, in case they aren't all the same
-  @ftoggleVersion = @ftoggleVersion || _.chain(@environments).map( (e) => @ftoggle[e].config.version ).max().value() + 1
-  @ftoggle[env].config.version = @ftoggleVersion
+  @ftoggleVersion = @ftoggleVersion || _.chain(@environments).map( (e) => @ftoggle[e].version ).max().value() + 1
+  @ftoggle[env].version = @ftoggleVersion
   @modified.push(env)
   cb.apply null, [null].concat(args).concat(env)
 
 exports.write = (args..., env, cb) ->
-  conf = exports.fromRoot(@configDir)
-  fs.writeFile "#{conf}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env].config), (err) ->
+  conf = exports.fromRoot(@ftoggle.configDir)
+  fs.writeFile "#{conf}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env]), (err) ->
     cb.apply null, [err].concat(args).concat(env)
 
 exports.stage = (args..., cb) ->
-  conf = exports.fromRoot(@configDir)
+  conf = exports.fromRoot(@ftoggle.configDir)
   files = if _(@stage).isArray() then _(@stage).map( (env) => "#{conf}/ftoggle.#{env}.json" ) else ["#{conf}/*"]
   add = cp.spawn 'git', ['add'].concat(files)
   add.on 'close', (code) =>

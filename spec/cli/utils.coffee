@@ -192,23 +192,21 @@ describe 'cli utils', ->
       modified: ['apple']
       ftoggle:
         banana:
-          config:
-            version: 2
+          version: 2
         pear:
-          config:
-            version: 3
+          version: 3
     Given -> @cb = jasmine.createSpy 'cb'
     
     context 'no version set', ->
       When -> @subject.bump.apply @options, ['feature', 'traffic', 'banana', @cb]
-      Then -> expect(@options.ftoggle.banana.config.version).toEqual 4
+      Then -> expect(@options.ftoggle.banana.version).toEqual 4
       And -> expect(@options.modified).toEqual ['apple', 'banana']
       And -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic', 'banana'
 
     context 'version set', ->
       Given -> @options.ftoggleVersion = 7
       When -> @subject.bump.apply @options, ['feature', 'traffic', 'banana', @cb]
-      Then -> expect(@options.ftoggle.banana.config.version).toEqual 7
+      Then -> expect(@options.ftoggle.banana.version).toEqual 7
       And -> expect(@options.modified).toEqual ['apple', 'banana']
       And -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic', 'banana'
       
@@ -216,11 +214,10 @@ describe 'cli utils', ->
   describe '.write', ->
     Given -> spyOn(@subject, 'fromRoot').andCallFake (p) -> "root/#{p}"
     Given -> @options =
-      configDir: 'config'
       ftoggle:
+        configDir: 'config'
         banana:
-          config:
-            version: 1
+          version: 1
     Given -> @cb = jasmine.createSpy 'cb'
     Given -> @fs.writeFile.andCallFake (path, obj, cb) -> cb()
     When -> @subject.write.apply @options, ['feature', 'traffic', 'banana', @cb]
@@ -232,7 +229,8 @@ describe 'cli utils', ->
     Given -> @add = new EventEmitter()
     Given -> @cb = jasmine.createSpy 'cb'
     Given -> @options =
-      configDir: 'config'
+      ftoggle:
+        configDir: 'config'
 
     context 'no error - all configs', ->
       Given -> @cp.spawn.when('git', ['add', 'root/config/*']).thenReturn @add
