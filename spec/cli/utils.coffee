@@ -1,10 +1,11 @@
 _ = require 'underscore'
 EventEmitter = require('events').EventEmitter
 chalk = require 'chalk'
+path = require 'path'
 
 describe 'cli utils', ->
   Given -> @resolve = jasmine.createSpyObj 'resolve', ['sync']
-  Given -> @path = jasmine.createSpyObj 'path', ['resolve', 'dirname']
+  Given -> @path = jasmine.createSpyObj 'path', ['resolve', 'dirname', 'normalize']
   Given -> @fs = jasmine.createSpyObj 'fs', ['writeFile']
   Given -> @cp = jasmine.createSpyObj 'child_process', ['spawn']
   Given -> @readline = jasmine.createSpyObj 'readline', ['createInterface']
@@ -51,6 +52,18 @@ describe 'cli utils', ->
       When -> @subject.getRoot()
       Then -> expect(@subject.writeBlock).toHaveBeenCalledWith chalk.red('Unable to locate local ftoggle installation.'), "Run #{chalk.gray('npm install ftoggle --save')} followed by #{chalk.gray('ftoggle init')} to get started."
       And -> expect(@subject.exit).toHaveBeenCalled()
+
+  describe '.fromRoot', ->
+    # Call thru to the real normalize
+    Given -> @path.normalize.andCallFake path.normalize
+    Given -> spyOn(@subject, 'getRoot').andReturn '/foo/bar'
+    context 'does not end in slash', ->
+      When -> @p = @subject.fromRoot './config'
+      Then -> expect(@p).toBe '/foo/bar/config'
+
+    context 'ends in slash', ->
+      When -> @p = @subject.fromRoot './config/'
+      Then -> expect(@p).toBe '/foo/bar/config'
 
   describe '.exit', ->
     Given -> spyOn process, 'exit'
@@ -201,6 +214,7 @@ describe 'cli utils', ->
       
 
   describe '.write', ->
+    Given -> spyOn(@subject, 'fromRoot').andCallFake (p) -> "root/#{p}"
     Given -> @options =
       configDir: 'config'
       ftoggle:
@@ -210,40 +224,41 @@ describe 'cli utils', ->
     Given -> @cb = jasmine.createSpy 'cb'
     Given -> @fs.writeFile.andCallFake (path, obj, cb) -> cb()
     When -> @subject.write.apply @options, ['feature', 'traffic', 'banana', @cb]
-    Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'config/ftoggle.banana.json', JSON.stringify(version: 1), jasmine.any(Function)
+    Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'root/config/ftoggle.banana.json', JSON.stringify(version: 1), jasmine.any(Function)
     And -> expect(@cb).toHaveBeenCalledWith undefined, 'feature', 'traffic', 'banana'
 
   describe '.stage', ->
+    Given -> spyOn(@subject, 'fromRoot').andCallFake (p) -> "root/#{p}"
     Given -> @add = new EventEmitter()
     Given -> @cb = jasmine.createSpy 'cb'
     Given -> @options =
       configDir: 'config'
 
     context 'no error - all configs', ->
-      Given -> @cp.spawn.when('git', ['add', 'config/*']).thenReturn @add
+      Given -> @cp.spawn.when('git', ['add', 'root/config/*']).thenReturn @add
       When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
       And -> @add.emit 'close', 0
       Then -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic'
 
     context 'no error - list of configs', ->
       Given -> @options.stage = ['banana', 'pear']
-      Given -> @cp.spawn.when('git', ['add', 'config/ftoggle.banana.json', 'config/ftoggle.pear.json']).thenReturn @add
+      Given -> @cp.spawn.when('git', ['add', 'root/config/ftoggle.banana.json', 'root/config/ftoggle.pear.json']).thenReturn @add
       When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
       And -> @add.emit 'close', 0
       Then -> expect(@cb).toHaveBeenCalledWith null, 'feature', 'traffic'
 
-    context 'no error - list of configs', ->
+    context 'error - list of configs', ->
       Given -> @options.stage = ['banana', 'pear']
-      Given -> @cp.spawn.when('git', ['add', 'config/ftoggle.banana.json', 'config/ftoggle.pear.json']).thenReturn @add
+      Given -> @cp.spawn.when('git', ['add', 'root/config/ftoggle.banana.json', 'root/config/ftoggle.pear.json']).thenReturn @add
       When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
       And -> @add.emit 'close', 1
-      Then -> expect(@cb).toHaveBeenCalledWith "#{chalk.gray('git add config/ftoggle.banana.json config/ftoggle.pear.json')} returned code #{chalk.red('1')}", 'feature', 'traffic'
+      Then -> expect(@cb).toHaveBeenCalledWith "#{chalk.gray('git add root/config/ftoggle.banana.json root/config/ftoggle.pear.json')} returned code #{chalk.red('1')}", 'feature', 'traffic'
 
-    context 'error', ->
-      Given -> @cp.spawn.when('git', ['add', 'config/*']).thenReturn @add
+    context 'error - all configs', ->
+      Given -> @cp.spawn.when('git', ['add', 'root/config/*']).thenReturn @add
       When -> @subject.stage.apply @options, ['feature', 'traffic', @cb]
       And -> @add.emit 'close', 1
-      Then -> expect(@cb).toHaveBeenCalledWith "#{chalk.gray('git add config/*')} returned code #{chalk.red('1')}", 'feature', 'traffic'
+      Then -> expect(@cb).toHaveBeenCalledWith "#{chalk.gray('git add root/config/*')} returned code #{chalk.red('1')}", 'feature', 'traffic'
 
   describe '.commit', ->
     Given -> @commit = new EventEmitter

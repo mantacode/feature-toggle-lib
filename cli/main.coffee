@@ -4,9 +4,7 @@ coerce = require './coerce'
 actions = require './actions'
 _ = require 'underscore'
 async = require 'async'
-extend = require 'config-extend'
 chalk = require 'chalk'
-path = require 'path'
 
 program.usage('<command> [feature] [options]')
 
@@ -14,6 +12,7 @@ program.usage('<command> [feature] [options]')
 try
   ftoggleDir = utils.getFtoggleDir()
   config = require("#{ftoggleDir}/.ftoggle.config")
+  configDir = utils.fromRoot(config.configDir)
 catch
 
 #  Don't try to do everything else unless we have a config or we're initializing
@@ -26,8 +25,8 @@ version = null
 #  Get the config for each environment
 if config
   for env in config.environments
-    config[env].config = require path.resolve(ftoggleDir, config[env].path)
-    version = version || config[env].config.version
+    config[env] = require "#{configDir}/ftoggle.#{env}"
+    version = version || config[env].version
 
 program.version(version || require('../package').version)
 
@@ -53,6 +52,7 @@ program.Command.prototype.addCommonOptions = ->
   @_stage()._bump()._commit()._envs()._dryRun()
 
 takeAction = program.takeAction = (args..., options) ->
+  options.env = config.environments if !options.env.length
   options.ftoggle = config
   options.modified = []
   options.stage = options.stage or options.commit

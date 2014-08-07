@@ -13,12 +13,8 @@ describe 'init', ->
     And -> @bar = require "#{__dirname}/ftoggle.bar"
     Then -> expect(@ftConfig).toEqual
       environments: ['foo', 'bar']
-      configDir: path.resolve(__dirname) + '/'
+      configDir: './'
       name: 'banana'
-      foo:
-        path: '../../ftoggle.foo.json'
-      bar:
-        path: '../../ftoggle.bar.json'
     And -> expect(@foo).toEqual
       version: 1
       name: 'banana-foo'
@@ -41,12 +37,8 @@ describe 'init', ->
     And -> @bar = require "#{__dirname}/ftoggle.bar"
     Then -> expect(@ftConfig).toEqual
       environments: ['foo', 'bar']
-      configDir: path.resolve(__dirname) + '/'
+      configDir: './'
       name: 'banana'
-      foo:
-        path: '../../ftoggle.foo.json'
-      bar:
-        path: '../../ftoggle.bar.json'
     And -> expect(@foo).toEqual
       version: 1
       name: 'banana-foo'
@@ -67,12 +59,8 @@ describe 'init', ->
     And -> @development = require "#{__dirname}/config/ftoggle.development"
     Then -> expect(@ftConfig).toEqual
       environments: ['production', 'development']
-      configDir: path.resolve(__dirname) + '/config'
+      configDir: 'config'
       name: 'init'
-      production:
-        path: '../../config/ftoggle.production.json'
-      development:
-        path: '../../config/ftoggle.development.json'
     And -> expect(@production).toEqual
       version: 1
       name: 'init-production'

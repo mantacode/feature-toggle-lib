@@ -13,10 +13,9 @@ describe 'cli main', ->
 
   context 'with config', ->
     Given -> spyOn process, 'exit'
-    Given -> @utils = jasmine.createSpyObj 'utils', ['writeBlock', 'exit', 'getFtoggleDir', 'getConfigs', 'write', 'bump', 'stage', 'commit']
+    Given -> @utils = jasmine.createSpyObj 'utils', ['writeBlock', 'exit', 'getFtoggleDir', 'getConfigs', 'write', 'bump', 'stage', 'commit', 'fromRoot']
     Given -> @utils.getFtoggleDir.andReturn '..'
-    Given -> @path = jasmine.createSpyObj 'path', ['resolve']
-    Given -> @path.resolve.when('..', 'ftoggle.json').thenReturn 'banana crater'
+    Given -> @utils.fromRoot.when('config').thenReturn 'root/config'
     Given -> @config =
       environments: ['production']
       configDir: 'config'
@@ -27,8 +26,7 @@ describe 'cli main', ->
       './utils': @utils
       './actions': @actions
       '../.ftoggle.config': @config
-      'banana crater': { version: 1 }
-      path: @path
+      'root/config/ftoggle.production': { version: 1 }
 
     describe 'name', ->
       Then -> expect(@subject.name).toBe 'ftoggle'
@@ -67,9 +65,7 @@ describe 'cli main', ->
           environments: ['production']
           configDir: 'config'
           production:
-            path: 'ftoggle.json'
-            config:
-              version: 1
+            version: 1
         And -> expect(@options.modified).toEqual []
         And -> expect(@utils.exit).toHaveBeenCalled()
         And -> expect(@options.check).toEqual ['add', 'banana', 'write', 'banana']
@@ -87,9 +83,7 @@ describe 'cli main', ->
           environments: ['production']
           configDir: 'config'
           production:
-            path: 'ftoggle.json'
-            config:
-              version: 1
+            version: 1
         And -> expect(@options.modified).toEqual []
         And -> expect(@utils.exit).toHaveBeenCalled()
         And -> expect(@options.check).toEqual ['add', 'banana', 'bump', 'banana', 'write', 'banana', 'stage', 'commit']
@@ -105,9 +99,7 @@ describe 'cli main', ->
           environments: ['production']
           configDir: 'config'
           production:
-            path: 'ftoggle.json'
-            config:
-              version: 1
+            version: 1
         And -> expect(@options.modified).toEqual []
         And -> expect(@utils.exit).toHaveBeenCalled()
         And -> expect(@options.stage).toBe true

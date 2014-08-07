@@ -32,6 +32,10 @@ exports.getRoot = ->
   ftoggleLib = @getFtoggleDir()
   return path.resolve(ftoggleLib, '..', '..')
 
+exports.fromRoot = (p) ->
+  # slice(0, -1) removes the trailing slash from the path, so that the returned path is predictable
+  return path.normalize("#{exports.getRoot()}/#{p}/").slice(0, -1)
+
 exports.exit = (err) ->
   if err
     exports.writeBlock err
@@ -42,8 +46,8 @@ exports.exit = (err) ->
 exports.expand = (obj, path, val) ->
   parts = path.split('.')
   expandPath = parts.shift()
-  if splitPlan == 'prompt'
-    rl = exports.getInterface()
+  #if @splitPlan == 'prompt'
+    #rl = exports.getInterface()
 
   while parts.length
     if !_(obj).safe(expandPath)
@@ -61,11 +65,13 @@ exports.bump = (args..., env, cb) ->
   cb.apply null, [null].concat(args).concat(env)
 
 exports.write = (args..., env, cb) ->
-  fs.writeFile "#{@configDir}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env].config), (err) ->
+  conf = exports.fromRoot(@configDir)
+  fs.writeFile "#{conf}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env].config), (err) ->
     cb.apply null, [err].concat(args).concat(env)
 
 exports.stage = (args..., cb) ->
-  files = if _(@stage).isArray() then _(@stage).map( (env) => "#{@configDir}/ftoggle.#{env}.json" ) else ["#{@configDir}/*"]
+  conf = exports.fromRoot(@configDir)
+  files = if _(@stage).isArray() then _(@stage).map( (env) => "#{conf}/ftoggle.#{env}.json" ) else ["#{conf}/*"]
   add = cp.spawn 'git', ['add'].concat(files)
   add.on 'close', (code) =>
     cb.apply null, [if code then exports.failedCmdMessage("git add #{files.join(' ')}", code) else null].concat(args)
