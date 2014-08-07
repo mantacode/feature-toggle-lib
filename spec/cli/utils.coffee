@@ -221,7 +221,7 @@ describe 'cli utils', ->
     Given -> @cb = jasmine.createSpy 'cb'
     Given -> @fs.writeFile.andCallFake (path, obj, cb) -> cb()
     When -> @subject.write.apply @options, ['feature', 'traffic', 'banana', @cb]
-    Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'root/config/ftoggle.banana.json', JSON.stringify(version: 1), jasmine.any(Function)
+    Then -> expect(@fs.writeFile).toHaveBeenCalledWith 'root/config/ftoggle.banana.json', JSON.stringify({version: 1}, null, 2), jasmine.any(Function)
     And -> expect(@cb).toHaveBeenCalledWith undefined, 'feature', 'traffic', 'banana'
 
   describe '.stage', ->

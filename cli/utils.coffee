@@ -66,7 +66,7 @@ exports.bump = (args..., env, cb) ->
 
 exports.write = (args..., env, cb) ->
   conf = exports.fromRoot(@ftoggle.configDir)
-  fs.writeFile "#{conf}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env]), (err) ->
+  fs.writeFile "#{conf}/ftoggle.#{env}.json", JSON.stringify(@ftoggle[env], null, 2), (err) ->
     cb.apply null, [err].concat(args).concat(env)
 
 exports.stage = (args..., cb) ->
