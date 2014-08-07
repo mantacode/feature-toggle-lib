@@ -63,5 +63,5 @@ describe.only 'add', ->
     And -> expect(@foo.version).toEqual 2
     And (done) ->
       ftoggleDiff (err, diff) ->
-        expect(diff).toContain "banana"
+        expect(diff).toContain chalk.green('+ "version": 2, + "features": { + "banana": { + "traffic": 1 + } + } +}')
         done()
