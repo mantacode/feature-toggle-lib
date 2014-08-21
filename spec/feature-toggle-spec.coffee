@@ -26,6 +26,7 @@ describe "FeatureToggle", ->
   Given -> @req = new FakeHttpRequest()
   Given -> @req.get = jasmine.createSpy('get').andReturn 'foo.bar.com'
   When -> @middleware(@req, @res, ->)
+  Then -> expect()
 
   describe "req.ftoggle.getFeatures", ->
     Given -> @subject.setConfig
@@ -61,6 +62,20 @@ describe "FeatureToggle", ->
     And -> @req.ftoggle.doesFeatureExist('bar') == false
 
   describe "req.ftoggle.isFeatureEnabled", ->
+
+    context.only "only a parent, no child", ->
+      Given -> @subject.setConfig
+        features:
+          banana:
+            traffic: 1
+            features:
+              peel:
+                traffic: 1
+              fuzz:
+                trafic: 0
+          foo:
+            traffic: 0
+      Then -> @req.ftoggle.isFeatureEnabled('foo') == false
 
     context "enabled parent, enabled child", ->
       Given -> @subject.setConfig
@@ -150,7 +165,7 @@ describe "FeatureToggle", ->
       Given -> @req.cookies['ftoggle-foo'] =
         version: 1
         baz:
-          enabled: true 
+          enabled: true
       Then -> @req.ftoggle.isFeatureEnabled('bar') == false
 
     context "cookie with unsticky exclusiveSplit", ->
@@ -167,7 +182,7 @@ describe "FeatureToggle", ->
       Given -> @req.cookies['ftoggle-foo'] =
         version: 1
         baz:
-          enabled: true 
+          enabled: true
       Then -> @req.ftoggle.isFeatureEnabled('bar') == true
 
     describe "middleware uses query parameters", ->
@@ -261,7 +276,7 @@ describe "FeatureToggle", ->
         Given -> @req.params['ftoggle-foo-off'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
 
-  
+
   describe "#findEnabledChildren", ->
     context "returns empty list for no results", ->
       Given -> @subject.setConfig

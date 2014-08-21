@@ -23,6 +23,7 @@ module.exports = class FeatureToggle
       cookieOptions = @toggleConfig.cookieOptions || {}
       for k, v of defaults
         cookieOptions[k] = cookieOptions[k] or v
+      req.ftoggle.config.cookieOptions = cookieOptions
       res.cookie(@toggleName(), userConfig, cookieOptions)
       next()
 
