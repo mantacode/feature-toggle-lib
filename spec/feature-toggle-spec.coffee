@@ -211,6 +211,42 @@ describe "FeatureToggle", ->
           Then -> @req.ftoggle.isFeatureEnabled('bar') == false
           And -> @req.ftoggle.isFeatureEnabled('baz') == false
 
+      context "two-level exclusiveSplit, toplevel off", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          exclusiveSplit: true
+          features:
+            bar:
+              traffic: .2
+              exclusiveSplit: true
+              features:
+                bar1:
+                  traffic: .5
+                bar2:
+                  traffic: .5
+            baz:
+              traffic: .8
+        Then -> @req.ftoggle.isFeatureEnabled('bar.bar1') == false
+        And  -> @req.ftoggle.isFeatureEnabled('bar.bar2') == false
+
+      context "two-level exclusiveSplit, toplevel on", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          exclusiveSplit: true
+          features:
+            bar:
+              traffic: .5
+              exclusiveSplit: true
+              features:
+                bar1:
+                  traffic: .5
+                bar2:
+                  traffic: .5
+            baz:
+              traffic: .8
+        Then -> @req.ftoggle.isFeatureEnabled('bar.bar1') == true
+        And  -> @req.ftoggle.isFeatureEnabled('bar.bar2') == false
+
       context "applyToggles doesn't murder non-exclusive features", ->
         Given -> @subject.setConfig
           name: "foo"

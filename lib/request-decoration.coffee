@@ -36,7 +36,7 @@ module.exports = class RequestDecoration
 
   lookupFeature: (path, nodes, over = null) ->
     current = path.shift()
-    nodes.enabled = over if over?
+    nodes.enabled = over if nodes? and over?
     if current? && nodes?
       over = false if nodes.enabled? && nodes.enabled == false
       @lookupFeature(path, nodes[current], over)
