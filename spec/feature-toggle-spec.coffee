@@ -150,8 +150,40 @@ describe "FeatureToggle", ->
       Given -> @req.cookies['ftoggle-foo'] =
         version: 1
         baz:
-          enabled: true 
+          enabled: true
       Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+      And -> @req.ftoggle.isFeatureEnabled('baz') == true
+
+    context "cookie with nested exclusiveSplit", ->
+      Given -> @subject.setConfig
+        version: 1
+        name: "foo"
+        exclusiveSplit: 1
+        features:
+          bar:
+            exclusiveSplit: true
+            traffic: 0.5
+            features:
+              quux:
+                traffic: 0.5
+              bazinga:
+                traffic: 0.5
+          baz:
+            traffic: 0.5
+      Given -> @req.cookies['ftoggle-foo'] =
+        version: 1
+        bar:
+          enabled: true
+          quux:
+            enabled: true
+          bazinga:
+            enabled: false
+        baz:
+          enabled: false
+      Then -> @req.ftoggle.isFeatureEnabled('baz') == false
+      And -> @req.ftoggle.isFeatureEnabled('bar.quux') == true
+      And -> @req.ftoggle.isFeatureEnabled('bar') == true
+      And -> @req.ftoggle.isFeatureEnabled('bar.bazinga') == false
 
     context "cookie with unsticky exclusiveSplit", ->
       Given -> @subject.setConfig

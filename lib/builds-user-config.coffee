@@ -6,14 +6,15 @@ module.exports = class BuildsUserConfig
 
   build: (config, base = {}, pass = false) ->
     _({}).tap (userConfig) =>
-      if base.enabled? and not config.unsticky
+      alreadySet = base.enabled? and not config.unsticky
+      if alreadySet
         userConfig.enabled = base.enabled
       else
         userConfig.enabled = (if config.traffic? then @math.random() <= config.traffic else true)
         userConfig.enabled = true if pass
       userConfig.version = config.version if config.version?
       if config.features?
-        if config.exclusiveSplit
+        if config.exclusiveSplit and not alreadySet
           pick = @exclusiveSplit(config.features, base, config.unsticky)
           userConfig[pick] = @build(config.features[pick], base[pick], true)
         else
