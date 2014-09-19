@@ -15,7 +15,8 @@ module.exports = class BuildsUserConfig
       if config.features?
         if config.exclusiveSplit
           pick = @exclusiveSplit(config.features, base, config.unsticky)
-          userConfig[pick] = @build(config.features[pick], base[pick], true)
+          if pick
+            userConfig[pick] = @build(config.features[pick], base[pick], true)
         else
           _(config.features).each (feature, name) =>
             userConfig[name] = @build(feature, base[name])
@@ -30,9 +31,10 @@ module.exports = class BuildsUserConfig
     winner = null
     r = @math.random()
     _(features).each (feature, name) ->
-      ceiling = floor + feature.traffic
-      winner = name if floor <= r && ceiling > r
-      floor = ceiling
+      if feature.traffic?
+        ceiling = floor + feature.traffic
+        winner = name if floor <= r && ceiling > r
+        floor = ceiling
     return winner
 
   validSplitKeys: (base) ->
