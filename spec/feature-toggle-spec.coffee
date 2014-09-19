@@ -382,6 +382,27 @@ describe "FeatureToggle", ->
       Then ->
         @req.ftoggle.findEnabledChildren()[0] == 'b'
 
+    context "no traffic set, no winner", ->
+      Given -> @subject.setConfig
+        exclusiveSplit: true
+        features:
+          a: {}
+          b: {}
+      Then ->
+        @req.ftoggle.findEnabledChildren().length == 0
+
+    context "mixed traffic and no traffic", ->
+      Given -> @subject.setConfig
+        exclusiveSplit: true
+        features:
+          a:
+            traffic: 0.2
+          b:
+            traffic: 0.8
+          c: {}
+      Then ->
+        @req.ftoggle.findEnabledChildren()[0] == 'b'
+
   describe "middleware sets cookie", ->
     Given -> @subject.setConfig
       name: "foo"
