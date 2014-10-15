@@ -2,8 +2,11 @@ module.exports = class RequestDecoration
   constructor: (@config, @featureVals = {}) ->
 
   isFeatureEnabled: (feature, trueCallback, falseCallback) ->
-    featureNodes = @lookupFeature(feature.split("."), @objClone(@config))
-    if enabled = (featureNodes? && featureNodes.enabled)
+    #featureNodes = @lookupFeature(feature.split("."), @objClone(@config))
+    
+    #if enabled = (featureNodes? && featureNodes.enabled)
+    enabled = Boolean(@safe(@config, feature + '.enabled'))
+    if enabled
       trueCallback?(feature)
     else
       falseCallback?(feature)
@@ -59,3 +62,22 @@ module.exports = class RequestDecoration
       return out
     else
       return o
+  
+  isObject: (obj) ->
+    # Implementation lifted from underscore
+    typeof obj is "function" or typeof obj is "object" and !!obj
+  
+  safe: (obj, path, otherwise) ->
+    return otherwise unless path
+    obj = (if @isObject(obj) then obj else {})
+    props = path.split(".")
+    if props.length is 1
+      if typeof obj[props[0]] is "undefined"
+        otherwise
+      else if obj[props[0]] is null
+        (if typeof otherwise is "undefined" then null else otherwise)
+      else
+        obj[props.shift()]
+    else
+      prop = props.shift()
+      (if @isObject(obj[prop]) then @safe(obj[prop], props.join("."), otherwise) else otherwise)
