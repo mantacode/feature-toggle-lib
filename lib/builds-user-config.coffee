@@ -4,29 +4,37 @@ module.exports = class BuildsUserConfig
 
   constructor: (@math) ->
 
-  build: (config, base = {}, pass = false) ->
+  build: (config, cookie = {}, pass = false) ->
     _({}).tap (userConfig) =>
-      alreadySet = base.enabled? and not config.unsticky
+      alreadySet = cookie.enabled? and not config.unsticky
       if alreadySet
-        userConfig.enabled = base.enabled
+        userConfig.enabled = cookie.enabled
       else
         userConfig.enabled = (if config.traffic? then @math.random() <= config.traffic else true)
         userConfig.enabled = true if pass
+
       userConfig.version = config.version if config.version?
-      if config.features?
-        if config.exclusiveSplit and not alreadySet
-          pick = @exclusiveSplit(config.features, base, config.unsticky)
-          if pick
-            userConfig[pick] = @build(config.features[pick], base[pick], true)
+      if config.features? and userConfig.enabled
+        if config.exclusiveSplit
+          if not alreadySet
+            # need to pick the exclusive split winner
+            pick = @exclusiveSplit(config.features, cookie, config.unsticky)
+            if pick
+              userConfig[pick] = @build(config.features[pick], cookie[pick], true)
+          else
+            # we already picked a winner, loop through features to find only that one and (re)build it
+            _(@validSplitKeys(cookie)).each (name) =>
+              if (cookie[name].enabled)
+                userConfig[name] = @build(config.features[name], cookie[name])
         else
           _(config.features).each (feature, name) =>
-            userConfig[name] = @build(feature, base[name])
+            userConfig[name] = @build(feature, cookie[name])
 
   # private
-  
-  exclusiveSplit: (features, base, unsticky) ->
-    if not unsticky and @validSplitKeys(base).length > 0
-      return @validSplitKeys(base)[0]
+
+  exclusiveSplit: (features, cookie, unsticky) ->
+    if not unsticky and @validSplitKeys(cookie).length > 0
+      return @validSplitKeys(cookie)[0]
 
     floor = 0
     winner = null
@@ -37,6 +45,7 @@ module.exports = class BuildsUserConfig
         winner = name if floor <= r && ceiling > r
         floor = ceiling
     return winner
+
 
   validSplitKeys: (base) ->
     return [] if not base
