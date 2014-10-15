@@ -3,7 +3,7 @@ module.exports = class RequestDecoration
 
   isFeatureEnabled: (feature, trueCallback, falseCallback) ->
     featureNodes = @lookupFeature(feature.split("."), @objClone(@config))
-    if enabled = (featureNodes? && featureNodes.enabled)
+    if enabled = (featureNodes? && (featureNodes != false) && featureNodes.enabled)
       trueCallback?(feature)
     else
       falseCallback?(feature)
@@ -34,12 +34,14 @@ module.exports = class RequestDecoration
 
   #private
 
-  lookupFeature: (path, nodes, over = null) ->
+  lookupFeature: (path, nodes, enabledOverride = null) ->
     current = path.shift()
-    nodes.enabled = over if nodes? and over?
+    nodes.enabled = enabledOverride if enabledOverride?
     if current? && nodes?
-      over = false if nodes.enabled? && nodes.enabled == false
-      @lookupFeature(path, nodes[current], over)
+      enabledOverride = false if !nodes.enabled? || nodes.enabled == false
+      if enabledOverride? && enabledOverride == false
+        return false
+      @lookupFeature(path, nodes[current], enabledOverride)
     else
       nodes
 
