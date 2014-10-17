@@ -222,6 +222,43 @@ describe "FeatureToggle", ->
       Then -> @req.ftoggle.isFeatureEnabled('nestedtest.baz') == true
       And -> @req.ftoggle.isFeatureEnabled('nestedtest.bar') == false
 
+    context "old cookie with no longer valid split choice (can happen via query param override from bookmark)", ->
+      Given -> @subject.setConfig
+        version: 1
+        name: "foo"
+        features:
+          nestedtest:
+            traffic: 1
+            exclusiveSplit: true
+            features:
+              bar:
+                exclusiveSplit: true
+                traffic: 0.5
+                features:
+                  quux:
+                    traffic: 0.5
+                  bazinga:
+                    traffic: 0.5
+              baz:
+                exclusiveSplit: true
+                traffic: 0.5
+                features:
+                  wonderful:
+                    traffic: 0.5
+                  lovely:
+                    traffic: 0.5
+      Given -> @req.cookies['ftoggle-foo'] =
+        version: 1
+        enabled: true
+        nestedtest:
+          enabled: true
+          bam:
+            enabled: true
+            wonderful:
+              enabled: true
+      Then -> @req.ftoggle.isFeatureEnabled('nestedtest.bam') == false
+      And -> (@req.ftoggle.isFeatureEnabled('nestedtest.bar') || @req.ftoggle.isFeatureEnabled('nestedtest.bar')) == true
+
 
     context "cookie with unsticky exclusiveSplit", ->
       Given -> @subject.setConfig
