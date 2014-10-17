@@ -403,6 +403,20 @@ describe "FeatureToggle", ->
         Given -> @req.headers['x-ftoggle-foo-on'] = 'bar.baz,second'
         Given -> @req.params['ftoggle-foo-off'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+      
+      context "overridden by query parameter with treatment that doesn't exist", ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 0
+              features:
+                baz:
+                  traffic: 0
+            second:
+              traffic: 0
+        Given -> @req.params['ftoggle-foo-on'] = 'fluffy'
+        Then -> @req.ftoggle.isFeatureEnabled('fluffy') == false
 
 
   describe "#findEnabledChildren", ->
