@@ -47,7 +47,6 @@ module.exports = class BuildsUserConfig
       if config.botTraffic? && bot then config.botTraffic else config.traffic
     else
       null
-    #if config?.botTraffic? && bot then config.botTraffic else config?.traffic
 
   exclusiveSplit: (features, cookie, unsticky, bot) ->
     if not unsticky and @validSplitKeys(cookie).length > 0
