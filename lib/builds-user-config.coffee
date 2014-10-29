@@ -4,14 +4,15 @@ module.exports = class BuildsUserConfig
 
   constructor: (@math) ->
 
-  build: (config, cookie = {}, pass = false) ->
+  build: (config, cookie = {}, pass = false, bot = false) ->
     _({}).tap (userConfig) =>
       if config?
         alreadySet = cookie.enabled? and not config.unsticky
         if alreadySet
           userConfig.enabled = cookie.enabled
         else
-          userConfig.enabled = (if config.traffic? then @math.random() <= config.traffic else true)
+          traffic = @traffic(config, bot)
+          userConfig.enabled = (if traffic? then @math.random() <= traffic else true)
           userConfig.enabled = true if pass
 
         userConfig.version = config.version if config.version?
@@ -19,7 +20,7 @@ module.exports = class BuildsUserConfig
           if config.exclusiveSplit
             if not alreadySet
               # need to pick the exclusive split winner
-              pick = @exclusiveSplit(config.features, cookie, config.unsticky)
+              pick = @exclusiveSplit(config.features, cookie, config.unsticky, bot)
               if pick
                 userConfig[pick] = @build(config.features[pick], cookie[pick], true)
             else
@@ -32,7 +33,7 @@ module.exports = class BuildsUserConfig
 
               if (!rebuilt)
                 # cookie did not have a valid winner set, so re-pick the winner
-                pick = @exclusiveSplit(config.features, cookie, config.unsticky)
+                pick = @exclusiveSplit(config.features, cookie, config.unsticky, bot)
                 if pick
                   userConfig[pick] = @build(config.features[pick], cookie[pick], true)
           else
@@ -41,7 +42,14 @@ module.exports = class BuildsUserConfig
 
   # private
 
-  exclusiveSplit: (features, cookie, unsticky) ->
+  traffic: (config, bot) ->
+    if config?
+      if config.botTraffic? && bot then config.botTraffic else config.traffic
+    else
+      null
+    #if config?.botTraffic? && bot then config.botTraffic else config?.traffic
+
+  exclusiveSplit: (features, cookie, unsticky, bot) ->
     if not unsticky and @validSplitKeys(cookie).length > 0
       cookieWinner = @validSplitKeys(cookie)[0]
       # make sure the value from the cookie exists in the config
@@ -51,9 +59,10 @@ module.exports = class BuildsUserConfig
     floor = 0
     winner = null
     r = @math.random()
-    _(features).each (feature, name) ->
-      if feature.traffic?
-        ceiling = floor + feature.traffic
+    _(features).each (feature, name) =>
+      traffic = @traffic(feature, bot)
+      if traffic?
+        ceiling = floor + traffic
         winner = name if floor <= r && ceiling > r
         floor = ceiling
     return winner
