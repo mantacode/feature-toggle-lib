@@ -22,23 +22,23 @@ module.exports = class BuildsUserConfig
               # need to pick the exclusive split winner
               pick = @exclusiveSplit(config.features, cookie, config.unsticky, bot)
               if pick
-                userConfig[pick] = @build(config.features[pick], cookie[pick], true)
+                userConfig[pick] = @build(config.features[pick], cookie[pick], true, bot)
             else
               # we already picked a winner, loop through features to find only that one and (re)build it
               rebuilt = false
               _(@validSplitKeys(cookie)).each (name) =>
                 if (cookie[name].enabled and config.features[name]?)
                   rebuilt = true
-                  userConfig[name] = @build(config.features[name], cookie[name])
+                  userConfig[name] = @build(config.features[name], cookie[name], false, bot)
 
               if (!rebuilt)
                 # cookie did not have a valid winner set, so re-pick the winner
                 pick = @exclusiveSplit(config.features, cookie, config.unsticky, bot)
                 if pick
-                  userConfig[pick] = @build(config.features[pick], cookie[pick], true)
+                  userConfig[pick] = @build(config.features[pick], cookie[pick], true, bot)
           else
             _(config.features).each (feature, name) =>
-              userConfig[name] = @build(feature, cookie[name])
+              userConfig[name] = @build(feature, cookie[name], false, bot)
 
   # private
 

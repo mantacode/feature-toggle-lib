@@ -492,6 +492,36 @@ describe "FeatureToggle", ->
       Then ->
         @req.ftoggle.findEnabledChildren()[0] == 'b'
 
+    context "a bot user", ->
+      Given -> @req.headers['x-bot'] = '1'
+      Given -> @subject.setConfig
+        exclusiveSplit: true
+        features:
+          a:
+            traffic: 1
+            botTraffic: 0
+            exclusiveSplit: true
+            features:
+              c:
+                traffic: 0
+              d:
+                traffic: 1
+          b:
+            traffic: 0
+            botTraffic: 1
+            exclusiveSplit: true
+            features:
+              e:
+                traffic: 0
+              f:
+                traffic: 1
+      Then ->
+        @req.ftoggle.findEnabledChildren()[0] == 'b'
+      And ->
+        @req.ftoggle.findEnabledChildren('a').length == 0
+      And ->
+        @req.ftoggle.findEnabledChildren('b')[0] == 'f'
+
   describe "middleware sets cookie", ->
     Given -> @subject.setConfig
       name: "foo"
