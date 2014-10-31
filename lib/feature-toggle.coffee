@@ -15,7 +15,7 @@ module.exports = class FeatureToggle
   newMiddleware: ->
     (req, res, next) =>
       defaults = @getDefaults(req)
-      userConfig = @createUserConfig(req.cookies[@toggleName()])
+      userConfig = @createUserConfig(req.cookies[@toggleName()], if parseInt(req.headers["x-bot"]) then true else false)
       @overrideByHeader(userConfig, req)
       @overrideByQueryParam(userConfig, req)
       featureVals = @createFeatureVals(userConfig)
@@ -47,10 +47,10 @@ module.exports = class FeatureToggle
       override(req.headers["x-#{@toggleName()}-on"], true).
       override(req.headers["x-#{@toggleName()}-off"], false)
 
-  createUserConfig: (cookie) ->
+  createUserConfig: (cookie, bot) ->
     base = cookie
     base = {} if not @cookieIsCurrent(cookie)
-    @buildsUserConfig.build(@toggleConfig, base)
+    @buildsUserConfig.build(@toggleConfig, base, false, bot)
 
   createFeatureVals: (userConfig) ->
     @buildsFeatureVals.build(userConfig, @toggleConfig)
