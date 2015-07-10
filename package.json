@@ -4,8 +4,10 @@
   "version": "1.3.0",
   "devDependencies": {
     "grunt": "~0.4.1",
+    "grunt-browserify": "^3.8.0",
+    "grunt-contrib-clean": "^0.6.0",
+    "grunt-contrib-coffee": "^0.13.0",
     "grunt-jasmine-bundle": ">= 0.1.4",
-    "express": "~3.0.0",
     "sandboxed-module": "~0.3.0"
   },
   "dependencies": {
