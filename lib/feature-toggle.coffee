@@ -31,17 +31,28 @@ module.exports = class FeatureToggle
 
   setConfig: (newConfig) ->
     @toggleConfig = newConfig
+    # Figure out a list of unsticky features
     @setUnstickyFeatures(newConfig, [])
     this
 
   setUnstickyFeatures: (conf, path) ->
-    _(conf.features).keys().each((k, v) =>
+    # Loop over the top level features
+    _.each conf.features, (v, k) =>
+      # Add this key to the path
       path.push k
+      # If this feature is unsticky, add the
+      # current path to the list
       if conf.features[k].unsticky
         @unstickyFeatures.push path.join('.')
+
+      # If this feature is an object with subfeatures,
+      # recurse over those features
       if conf.features[k].features
         @setUnstickyFeatures conf.features[k], path
-    ).value()
+
+    # Let's not return the result of _.each, which is
+    # . . . ?
+    return
 
   addConfig: (newFeatureConf) ->
     @toggleConfig = merger.merge(@toggleConfig, newFeatureConf)
@@ -61,15 +72,32 @@ module.exports = class FeatureToggle
       override(req.headers["x-#{@toggleName()}-off"], false)
 
   createUserConfig: (cookie, bot) ->
+    # If a cookie is already set and it's current, then we'll
+    # keep all those toggles and not recalculate
     if !_.isEmpty(cookie) and @cookieIsCurrent(cookie)
+      # EXCEPT for any unsticky features, but for those,
+      # we'll ONLY recalculate the unsticky parts of the tree,
+      # and extend the existine cookie
       if @unstickyFeatures.length
+        # Loop over pre-determined unsticky features
         _.each @unstickyFeatures, (feature) =>
+
+          # Build the path to the feature in the form features.x.features.y.features.z
           featurePath = "features.#{feature.replace('.', '.features.')}"
+
+          # Get the config at that path
           subConfig = _.get(@toggleConfig, featurePath)
-          _.set cookie, feature, @buildsUserConfig.build(subConfig, {}, false, bot)
+
+          # Rebuild that part of the config
+          rebuiltConfig = @buildsUserConfig.build(subConfig, {}, false, bot)
+
+          # Set the same path (but without '.feature.') in the cookie
+          _.set cookie, feature, rebuiltConfig
+
       return cookie
     else
-    @buildsUserConfig.build(@toggleConfig, {}, false, bot)
+      # If there's no cookie, build the whole thing now
+      @buildsUserConfig.build(@toggleConfig, {}, false, bot)
 
   createFeatureVals: (userConfig) ->
     @buildsFeatureVals.build(userConfig, @toggleConfig)
