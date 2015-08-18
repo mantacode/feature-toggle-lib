@@ -2,6 +2,7 @@ describe "FeatureToggle config", ->
   Given -> @subject = new (requireSubject 'lib/feature-toggle')
   Given -> @subject.setConfig
     version: 1
+    name: 'foo'
     features:
       foo:
         traffic: 1
@@ -33,7 +34,7 @@ describe "FeatureToggle", ->
       features:
         foo:
           traffic: 1
-    Then -> expect(@req.ftoggle.getFeatures()).toEqual({version:1,enabled: true, foo:{enabled: true}});
+    Then -> expect(@req.ftoggle.getFeatures()).toEqual({v:1,e: 1, foo:{e: 1}})
 
   describe "req.ftoggle.conf", ->
     Given -> @subject.setConfig
@@ -81,6 +82,7 @@ describe "FeatureToggle", ->
 
     context "enabled parent, disabled child", ->
       Given -> @subject.setConfig
+        version: 2
         features:
           foo:
             traffic: 0.4
@@ -102,12 +104,11 @@ describe "FeatureToggle", ->
     context "cookie previously set", ->
       Given -> @subject.setConfig
         name: "foo"
+        version: 1
         features:
          foo:
            traffic: 0.6
-      Given -> @req.cookies['ftoggle-foo'] =
-        foo:
-         enabled: false
+      Given -> @req.cookies['ftoggle-foo'] = JSON.stringify({e: 1, v: 1})
       Then -> @req.ftoggle.isFeatureEnabled('foo') == false
 
     context "cookie previously set with old version", ->
@@ -117,10 +118,7 @@ describe "FeatureToggle", ->
         features:
          foo:
            traffic: 0.6
-      Given -> @req.cookies['ftoggle-foo'] =
-        version: 2
-        foo:
-         enabled: false
+      Given -> @req.cookies['ftoggle-foo'] = JSON.stringify({e: 1, v: 2})
       Then -> @req.ftoggle.isFeatureEnabled('foo') == true
 
     context "cookie with unsticky", ->
@@ -131,10 +129,7 @@ describe "FeatureToggle", ->
           foo:
             traffic: 0.6
             unsticky: 1
-      Given -> @req.cookies['ftoggle-foo'] =
-        version: 1
-        foo:
-          enabled: false
+      Given -> @req.cookies['ftoggle-foo'] = JSON.stringify({e:1, v:1})
       Then -> @req.ftoggle.isFeatureEnabled('foo') == true
 
     context "cookie with exclusiveSplit", ->
@@ -147,10 +142,11 @@ describe "FeatureToggle", ->
             traffic: 0.5
           baz:
             traffic: 0.5
-      Given -> @req.cookies['ftoggle-foo'] =
-        version: 1
+      Given -> @req.cookies['ftoggle-foo'] = JSON.stringify
+        e: 1
+        v: 1
         baz:
-          enabled: true
+          e: 1
       Then -> @req.ftoggle.isFeatureEnabled('bar') == false
       And -> @req.ftoggle.isFeatureEnabled('baz') == true
 
@@ -170,16 +166,13 @@ describe "FeatureToggle", ->
                 traffic: 0.5
           baz:
             traffic: 0.5
-      Given -> @req.cookies['ftoggle-foo'] =
-        version: 1
+      Given -> @req.cookies['ftoggle-foo'] = JSON.stringify
+        e: 1
+        v: 1
         bar:
-          enabled: true
+          e: 1
           quux:
-            enabled: true
-          bazinga:
-            enabled: false
-        baz:
-          enabled: false
+            e: 1
       Then -> @req.ftoggle.isFeatureEnabled('baz') == false
       And -> @req.ftoggle.isFeatureEnabled('bar.quux') == true
       And -> @req.ftoggle.isFeatureEnabled('bar') == true
@@ -210,15 +203,15 @@ describe "FeatureToggle", ->
                     traffic: 0.5
                   lovely:
                     traffic: 0.5
-      Given -> @req.cookies['ftoggle-foo'] =
-        version: 1
-        enabled: true
+      Given -> @req.cookies['ftoggle-foo'] = JSON.stringify
+        v: 1
+        e: 1
         nestedtest:
-          enabled: true
+          e: 1
           baz:
-            enabled: true
+            e: 1
             wonderful:
-              enabled: true
+              e: 1
       Then -> @req.ftoggle.isFeatureEnabled('nestedtest.baz') == true
       And -> @req.ftoggle.isFeatureEnabled('nestedtest.bar') == false
 
@@ -247,35 +240,31 @@ describe "FeatureToggle", ->
                     traffic: 0.5
                   lovely:
                     traffic: 0.5
-      Given -> @req.cookies['ftoggle-foo'] =
-        version: 1
-        enabled: true
-        nestedtest:
-          enabled: true
-          bam:
-            enabled: true
-            wonderful:
-              enabled: true
+      Given -> @req.query['ftoggle-foo-on'] = 'nestedtest.bam.wonderful'
       Then -> @req.ftoggle.isFeatureEnabled('nestedtest.bam') == false
       And -> (@req.ftoggle.isFeatureEnabled('nestedtest.bar') || @req.ftoggle.isFeatureEnabled('nestedtest.bar')) == true
-
 
     context "cookie with unsticky exclusiveSplit", ->
       Given -> @subject.setConfig
         version: 1
         name: "foo"
-        exclusiveSplit: 1
-        unsticky: 1
         features:
-          bar:
-            traffic: 0.5
+          foo:
+            exclusiveSplit: 1
+            unsticky: 1
+            features:
+              bar:
+                traffic: 0.5
+              baz:
+                traffic: 0.5
+      Given -> @req.cookies['ftoggle-foo'] = JSON.stringify
+        v: 1
+        e: 1
+        foo:
+          e: 1
           baz:
-            traffic: 0.5
-      Given -> @req.cookies['ftoggle-foo'] =
-        version: 1
-        baz:
-          enabled: true
-      Then -> @req.ftoggle.isFeatureEnabled('bar') == true
+            e: 1
+      Then -> @req.ftoggle.isFeatureEnabled('foo.bar') == true
 
     describe "middleware uses query parameters", ->
       context "turns on", ->
@@ -289,16 +278,17 @@ describe "FeatureToggle", ->
                   traffic: 0
             second:
               traffic: 0
-        Given -> @req.params['ftoggle-foo-on'] = 'bar.baz,second'
+        Given -> @req.query['ftoggle-foo-on'] = 'bar.baz,second'
         Then -> @req.ftoggle.isFeatureEnabled('bar.baz') == true
         And -> @req.ftoggle.isFeatureEnabled('second') == true
+
       context "turns off", ->
         Given -> @subject.setConfig
           name: "foo"
           features:
             bar:
               traffic: 1
-        Given -> @req.params['ftoggle-foo-off'] = 'bar'
+        Given -> @req.query['ftoggle-foo-off'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
 
       context "honors exclusiveSplit", ->
@@ -310,11 +300,13 @@ describe "FeatureToggle", ->
               traffic: .5
             baz:
               traffic: .5
+
         context "turn on", ->
-          Given -> @req.params['ftoggle-foo-on'] = 'baz'
+          Given -> @req.query['ftoggle-foo-on'] = 'baz'
           Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+
         context "turn off", ->
-          Given -> @req.params['ftoggle-foo-off'] = 'bar'
+          Given -> @req.query['ftoggle-foo-off'] = 'bar'
           Then -> @req.ftoggle.isFeatureEnabled('bar') == false
           And -> @req.ftoggle.isFeatureEnabled('baz') == false
 
@@ -381,6 +373,7 @@ describe "FeatureToggle", ->
         Given -> @req.headers['x-ftoggle-foo-on'] = 'bar.baz,second'
         Then -> @req.ftoggle.isFeatureEnabled('bar.baz') == true
         And -> @req.ftoggle.isFeatureEnabled('second') == true
+
       context "turns off", ->
         Given -> @subject.setConfig
           name: "foo"
@@ -389,6 +382,7 @@ describe "FeatureToggle", ->
               traffic: 1
         Given -> @req.headers['x-ftoggle-foo-off'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
+
       context "overridden by query parameter", ->
         Given -> @subject.setConfig
           name: "foo"
@@ -401,7 +395,7 @@ describe "FeatureToggle", ->
             second:
               traffic: 0
         Given -> @req.headers['x-ftoggle-foo-on'] = 'bar.baz,second'
-        Given -> @req.params['ftoggle-foo-off'] = 'bar'
+        Given -> @req.query['ftoggle-foo-off'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == false
 
       context "overridden by query parameter with treatment that doesn't exist", ->
@@ -415,7 +409,7 @@ describe "FeatureToggle", ->
                   traffic: 0
             second:
               traffic: 0
-        Given -> @req.params['ftoggle-foo-on'] = 'fluffy'
+        Given -> @req.query['ftoggle-foo-on'] = 'fluffy'
         Then -> @req.ftoggle.isFeatureEnabled('fluffy') == false
 
 
@@ -529,9 +523,10 @@ describe "FeatureToggle", ->
       features:
         foo:
           traffic: 1
-    Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
-      enabled: true
-    And -> @res.cookies['ftoggle-foo'].version == 2
+    When -> @cookie = JSON.parse(@res.cookies['ftoggle-foo'])
+    Then -> expect(@cookie.foo).toEqual
+      e: 1
+    And -> @cookie.v == 2
 
     context "with cookie options", ->
       Given -> @subject.setConfig
@@ -544,9 +539,10 @@ describe "FeatureToggle", ->
           domain: 'my.domain.com'
           expires: 'my expires'
           madeUpOption: 'this is fake'
-      Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
-        enabled: true
-      And -> @res.cookies['ftoggle-foo'].version == 2
+      When -> @cookie = JSON.parse(@res.cookies['ftoggle-foo'])
+      Then -> expect(@cookie.foo).toEqual
+        e: 1
+      And -> @cookie.v == 2
       And -> expect(@res.cookies['ftoggle-foo--options']).toEqual
         domain: 'my.domain.com'
         expires: 'my expires'
@@ -562,9 +558,10 @@ describe "FeatureToggle", ->
           foo:
             traffic: 1
         cookieOptions: {}
-      Then -> expect(@res.cookies['ftoggle-foo'].foo).toEqual
-        enabled: true
-      And -> @res.cookies['ftoggle-foo'].version == 2
+      When -> @cookie = JSON.parse(@res.cookies['ftoggle-foo'])
+      Then -> expect(@cookie.foo).toEqual
+        e: 1
+      And -> @cookie.v == 2
       And -> expect(@res.cookies['ftoggle-foo--options']).toEqual
         domain: '.bar.com'
         maxAge: 63072000000

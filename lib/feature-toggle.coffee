@@ -4,6 +4,7 @@ RequestDecoration = require('./request-decoration')
 BuildsUserConfig = require('./builds-user-config')
 BuildsFeatureVals = require('./builds-feature-vals')
 merger = require('./merger')
+_ = require 'lodash'
 
 module.exports = class FeatureToggle
 
@@ -11,24 +12,36 @@ module.exports = class FeatureToggle
     @toggleConfig = {}
     @buildsUserConfig = new BuildsUserConfig(math)
     @buildsFeatureVals = new BuildsFeatureVals()
+    @unstickyFeatures = []
 
   newMiddleware: ->
     (req, res, next) =>
       defaults = @getDefaults(req)
-      userConfig = @createUserConfig(req.cookies[@toggleName()], if parseInt(req.headers["x-bot"]) then true else false)
+      cookie = req.cookies[@toggleName()] or '{}'
+      userConfig = @createUserConfig(JSON.parse(cookie), if parseInt(req.headers["x-bot"]) then true else false)
       @overrideByHeader(userConfig, req)
       @overrideByQueryParam(userConfig, req)
       featureVals = @createFeatureVals(userConfig)
-      req.ftoggle = new RequestDecoration(userConfig, featureVals)
+      req.ftoggle = new RequestDecoration(userConfig, featureVals, @toggleConfig)
       cookieOptions = @toggleConfig.cookieOptions || {}
       for k, v of defaults
         cookieOptions[k] = cookieOptions[k] or v
-      res.cookie(@toggleName(), userConfig, cookieOptions)
+      res.cookie(@toggleName(), JSON.stringify(userConfig), cookieOptions)
       next()
 
   setConfig: (newConfig) ->
     @toggleConfig = newConfig
+    @setUnstickyFeatures(newConfig, [])
     this
+
+  setUnstickyFeatures: (conf, path) ->
+    _(conf.features).keys().each((k, v) =>
+      path.push k
+      if conf.features[k].unsticky
+        @unstickyFeatures.push path.join('.')
+      if conf.features[k].features
+        @setUnstickyFeatures conf.features[k], path
+    ).value()
 
   addConfig: (newFeatureConf) ->
     @toggleConfig = merger.merge(@toggleConfig, newFeatureConf)
@@ -48,9 +61,15 @@ module.exports = class FeatureToggle
       override(req.headers["x-#{@toggleName()}-off"], false)
 
   createUserConfig: (cookie, bot) ->
-    base = cookie
-    base = {} if not @cookieIsCurrent(cookie)
-    @buildsUserConfig.build(@toggleConfig, base, false, bot)
+    if !_.isEmpty(cookie) and @cookieIsCurrent(cookie)
+      if @unstickyFeatures.length
+        _.each @unstickyFeatures, (feature) =>
+          featurePath = "features.#{feature.replace('.', '.features.')}"
+          subConfig = _.get(@toggleConfig, featurePath)
+          _.set cookie, feature, @buildsUserConfig.build(subConfig, {}, false, bot)
+      return cookie
+    else
+    @buildsUserConfig.build(@toggleConfig, {}, false, bot)
 
   createFeatureVals: (userConfig) ->
     @buildsFeatureVals.build(userConfig, @toggleConfig)
@@ -58,7 +77,7 @@ module.exports = class FeatureToggle
   cookieIsCurrent: (cookie) ->
     return false unless cookie?
     return true unless @toggleConfig.version?
-    cookie.version == @toggleConfig.version
+    cookie.v == @toggleConfig.version
 
   getDefaults: (req) ->
     parts = req.get('host').split(':')[0].split('.')

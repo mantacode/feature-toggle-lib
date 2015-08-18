@@ -1,30 +1,31 @@
+_ = if typeof window isnt 'undefined' then window._ else require('lodash')
+
 module.exports = class RequestDecoration
-  constructor: (@config, @featureVals = {}) ->
+  constructor: (@config, @featureVals = {}, @toggleConfig = {}) ->
 
   isFeatureEnabled: (feature, trueCallback, falseCallback) ->
-    featureNodes = @lookupFeature(feature.split("."), @objClone(@config))
-    if enabled = (featureNodes? && (featureNodes != false) && featureNodes.enabled)
+    featureNodes = @lookupFeature(feature.split("."), _.clone(@config))
+    if enabled = (featureNodes? && (featureNodes != false) && featureNodes.e)
       trueCallback?(feature)
     else
       falseCallback?(feature)
-    enabled
+    Boolean(enabled)
 
   findEnabledChildren: (prefix) ->
     p = []
     p = prefix.split(".") if prefix?
     feature = @lookupFeature(p, @config)
     return [] unless feature
-    children = @filter Object.keys(feature), (k) ->
-      feature[k].enabled == true
+    children = _.filter(_.keys(feature), (k) ->
+      feature[k].e == 1
+    )
     if children? then children else []
 
   doesFeatureExist: (feature) ->
-    nodes = @lookupFeature(feature.split("."), @config)
-    return nodes?
+    _.has @toggleConfig, 'features.' + feature.replace('.', '.features.')
 
   getFeatures: () ->
     @config
-
 
   featureVal: (key) ->
     if @featureVals[key]? then @featureVals[key] else null
@@ -36,28 +37,11 @@ module.exports = class RequestDecoration
 
   lookupFeature: (path, nodes, enabledOverride = null) ->
     current = path.shift()
-    nodes.enabled = enabledOverride if enabledOverride?
+    nodes.e = enabledOverride if enabledOverride?
     if current? && nodes?
-      enabledOverride = false if !nodes.enabled? || nodes.enabled == false
+      enabledOverride = false if !nodes.e?
       if enabledOverride? && enabledOverride == false
         return false
       @lookupFeature(path, nodes[current], enabledOverride)
     else
       nodes
-
-  # not using underscore here, for front-end reasons
-  filter: (list, f) ->
-    out = []
-    list.forEach (e) ->
-      if f(e)
-        out.push e
-    return out
-
-  # same story; limiting dependencies
-  objClone: (o) ->
-    if typeof o == 'object'
-      out = {}
-      out[k] = @objClone(v) for k, v of o
-      return out
-    else
-      return o
