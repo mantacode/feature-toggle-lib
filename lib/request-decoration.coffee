@@ -1,4 +1,4 @@
-_ = if typeof window isnt 'undefined' then window._ else require('lodash')
+_ = if (typeof window isnt 'undefined' and window._) then window._ else require('lodash')
 
 module.exports = class RequestDecoration
   constructor: (@config, @featureVals = {}, @toggleConfig = {}) ->

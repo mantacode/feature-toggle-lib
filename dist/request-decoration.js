@@ -1,7 +1,7 @@
 (function() {
   var RequestDecoration, _;
 
-  _ = typeof window !== 'undefined' ? window._ : require('lodash');
+  _ = typeof window !== 'undefined' && window._ ? window._ : require('lodash');
 
   module.exports = RequestDecoration = (function() {
     function RequestDecoration(config, featureVals, toggleConfig) {
