@@ -354,9 +354,23 @@ describe "FeatureToggle", ->
               traffic: 1
             baz:
               traffic: 1
-        Given -> @req.params['ftoggle-foo-on'] = 'bar'
+        Given -> @req.query['ftoggle-foo-on'] = 'bar'
         Then -> @req.ftoggle.isFeatureEnabled('bar') == true
-        Then -> @req.ftoggle.isFeatureEnabled('baz') == true
+        And -> @req.ftoggle.isFeatureEnabled('baz') == true
+
+      context 'overrides cookie', ->
+        Given -> @subject.setConfig
+          name: "foo"
+          features:
+            bar:
+              traffic: 1
+        Given -> @req.cookies['ftoggle-foo'] = JSON.stringify
+          e: 1
+          v: 1
+          bar:
+            e: 1
+        Given -> @req.query['ftoggle-foo-off'] = 'bar'
+        Then -> @req.ftoggle.isFeatureEnabled('bar') == false
 
     describe "header toggles feature", ->
       context "turns on", ->
