@@ -18,7 +18,11 @@ module.exports = class FeatureToggle
     (req, res, next) =>
       defaults = @getDefaults(req)
       cookie = req.cookies[@toggleName()] or '{}'
-      userConfig = @createUserConfig(JSON.parse(cookie), if parseInt(req.headers["x-bot"]) then true else false)
+      try
+        cookie = JSON.parse(cookie)
+      catch e
+        cookie = {}
+      userConfig = @createUserConfig(cookie, if parseInt(req.headers["x-bot"]) then true else false)
       @overrideByHeader(userConfig, req)
       @overrideByQueryParam(userConfig, req)
       featureVals = @createFeatureVals(userConfig)
