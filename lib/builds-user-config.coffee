@@ -1,22 +1,25 @@
-_ = require('underscore')
+_ = require('lodash')
 
 module.exports = class BuildsUserConfig
 
   constructor: (@math) ->
 
   build: (config, cookie = {}, pass = false, bot = false) ->
-    _({}).tap (userConfig) =>
+    _.tap {}, (userConfig) =>
       if config?
-        alreadySet = cookie.enabled? and not config.unsticky
+        alreadySet = cookie.e? and not config.unsticky
         if alreadySet
-          userConfig.enabled = cookie.enabled
+          userConfig.e = cookie.e
         else
           traffic = @traffic(config, bot)
-          userConfig.enabled = (if traffic? then @math.random() <= traffic else true)
-          userConfig.enabled = true if pass
-
-        userConfig.version = config.version if config.version?
-        if config.features? and userConfig.enabled
+          userConfig.e = (if traffic? then @math.random() <= traffic else true)
+          userConfig.e = +userConfig.e
+          delete userConfig.e if !userConfig.e
+          userConfig.e = 1 if pass
+        
+        version = config.v or config.version
+        userConfig.v = version if version?
+        if config.features? and userConfig.e
           if config.exclusiveSplit
             if not alreadySet
               # need to pick the exclusive split winner
@@ -26,8 +29,8 @@ module.exports = class BuildsUserConfig
             else
               # we already picked a winner, loop through features to find only that one and (re)build it
               rebuilt = false
-              _(@validSplitKeys(cookie)).each (name) =>
-                if (cookie[name].enabled and config.features[name]?)
+              _.each @validSplitKeys(cookie), (name) =>
+                if (cookie[name].e and config.features[name]?)
                   rebuilt = true
                   userConfig[name] = @build(config.features[name], cookie[name], false, bot)
 
@@ -37,8 +40,9 @@ module.exports = class BuildsUserConfig
                 if pick
                   userConfig[pick] = @build(config.features[pick], cookie[pick], true, bot)
           else
-            _(config.features).each (feature, name) =>
+            _.each config.features, (feature, name) =>
               userConfig[name] = @build(feature, cookie[name], false, bot)
+              delete userConfig[name] if _.isEmpty userConfig[name]
 
   # private
 
@@ -58,7 +62,7 @@ module.exports = class BuildsUserConfig
     floor = 0
     winner = null
     r = @math.random()
-    _(features).each (feature, name) =>
+    _.each features, (feature, name) =>
       traffic = @traffic(feature, bot)
       if traffic?
         ceiling = floor + traffic
@@ -69,4 +73,4 @@ module.exports = class BuildsUserConfig
 
   validSplitKeys: (base) ->
     return [] if not base
-    return _(_(base).keys()).without("version", "enabled")
+    return _(base).keys().without('v', 'e').value()

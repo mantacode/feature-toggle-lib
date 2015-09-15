@@ -1,9 +1,9 @@
-_ = require('underscore')
+_ = require('lodash')
 
 # doesn't handle arrays because we don't have any
 merge = (a,b) ->
   if b?
-    if typeof a == 'object' && not _(a).isArray()
+    if typeof a == 'object' && not _.isArray(a)
       res = {}
       for k,v of a
         res[k] = merge(v, b[k])
