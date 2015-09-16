@@ -111,6 +111,16 @@ describe "FeatureToggle", ->
       Given -> @req.cookies['ftoggle-foo'] = JSON.stringify({e: 1, v: 1})
       Then -> @req.ftoggle.isFeatureEnabled('foo') == false
 
+    context 'old style cookie previously set', ->
+      Given -> @subject.setConfig
+        name: "foo"
+        version: 1
+        features:
+         foo:
+           traffic: 1
+      Given -> @req.cookies['ftoggle-foo'] = {e: 1, v: 1}
+      Then -> @req.ftoggle.isFeatureEnabled('foo') == true
+
     context "cookie previously set with old version", ->
       Given -> @subject.setConfig
         version: 3
