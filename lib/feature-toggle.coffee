@@ -68,8 +68,8 @@ module.exports = class FeatureToggle
 
   overrideByQueryParam: (userConfig, req) ->
     new OverridesToggleConfig(@toggleConfig, userConfig).
-      override(req.query["#{@toggleName()}-on"], true).
-      override(req.query["#{@toggleName()}-off"], false)
+      override(req.query["#{@toggleName()}-on"], 1).
+      override(req.query["#{@toggleName()}-off"], 0)
 
   overrideByHeader: (userConfig, req) ->
     new OverridesToggleConfig(@toggleConfig, userConfig).
