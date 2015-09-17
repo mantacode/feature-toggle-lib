@@ -12,7 +12,7 @@ module.exports = class OverridesToggleConfig
   applyToggles: (parts, config, data, val) ->
     thisPart = parts.shift()
     unless data[thisPart]?
-      data[thisPart] = { enabled: val }
+      data[thisPart] = { e: val }
     data[thisPart].e = val
     if config.exclusiveSplit
       Object.keys(data).forEach (k) ->
