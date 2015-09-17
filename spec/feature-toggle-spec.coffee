@@ -118,8 +118,9 @@ describe "FeatureToggle", ->
         features:
          foo:
            traffic: 1
-      Given -> @req.cookies['ftoggle-foo'] = {e: 1, v: 1}
+      Given -> @req.cookies['ftoggle-foo'] = {enabled: 1, version: 1}
       Then -> @req.ftoggle.isFeatureEnabled('foo') == true
+      And -> expect(@res.clearCookie).toHaveBeenCalledWith 'ftoggle-foo', { domain: '.manta.com', path: '/' }
 
     context "cookie previously set with old version", ->
       Given -> @subject.setConfig

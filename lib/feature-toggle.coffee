@@ -21,6 +21,7 @@ module.exports = class FeatureToggle
       try
         cookie = JSON.parse(cookie)
       catch e
+        res.clearCookie @toggleName(), { domain: '.manta.com', path: '/' }
         cookie = {}
       userConfig = @createUserConfig(cookie, if parseInt(req.headers["x-bot"]) then true else false)
       @overrideByHeader(userConfig, req)
