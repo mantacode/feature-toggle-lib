@@ -27,10 +27,11 @@ module.exports = class FeatureToggle
       @overrideByHeader(userConfig, req)
       @overrideByQueryParam(userConfig, req)
       featureVals = @createFeatureVals(userConfig)
-      req.ftoggle = new RequestDecoration(userConfig, featureVals, @toggleConfig)
       cookieOptions = @toggleConfig.cookieOptions || {}
       for k, v of defaults
         cookieOptions[k] = cookieOptions[k] or v
+      @toggleConfig.cookieOptions = cookieOptions
+      req.ftoggle = new RequestDecoration(userConfig, res.cookie.bind(res), featureVals, @toggleConfig)
       res.cookie(@toggleName(), JSON.stringify(userConfig), cookieOptions)
       next()
 

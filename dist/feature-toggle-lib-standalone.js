@@ -5,49 +5,23 @@
   _ = typeof window !== 'undefined' && window._ ? window._ : require('lodash');
 
   module.exports = RequestDecoration = (function() {
-    function RequestDecoration(config, featureVals, toggleConfig) {
+    function RequestDecoration(config, cookie, featureVals, toggleConfig) {
       this.config = config;
+      this.cookie = cookie;
       this.featureVals = featureVals != null ? featureVals : {};
       this.toggleConfig = toggleConfig != null ? toggleConfig : {};
     }
 
     RequestDecoration.prototype.isFeatureEnabled = function(feature, trueCallback, falseCallback) {
-      var enabled, featureNodes;
-      featureNodes = this.lookupFeature(feature.split("."), _.clone(this.config));
-      if (enabled = (featureNodes != null) && (featureNodes !== false) && featureNodes.e) {
-        if (typeof trueCallback === "function") {
-          trueCallback(feature);
-        }
-      } else {
-        if (typeof falseCallback === "function") {
-          falseCallback(feature);
-        }
-      }
-      return Boolean(enabled);
+      return _.has(this.config, feature);
     };
 
     RequestDecoration.prototype.findEnabledChildren = function(prefix) {
-      var children, feature, p;
-      p = [];
-      if (prefix != null) {
-        p = prefix.split(".");
-      }
-      feature = this.lookupFeature(p, this.config);
-      if (!feature) {
-        return [];
-      }
-      children = _.filter(_.keys(feature), function(k) {
-        return feature[k].e === 1;
-      });
-      if (children != null) {
-        return children;
-      } else {
-        return [];
-      }
+      return _(_.get(this.config, prefix)).keys().without('e').value();
     };
 
     RequestDecoration.prototype.doesFeatureExist = function(feature) {
-      return _.has(this.toggleConfig, 'features.' + feature.replace('.', '.features.'));
+      return _.has(this.toggleConfig, this.makeFeaturePath(feature));
     };
 
     RequestDecoration.prototype.getFeatures = function() {
@@ -55,37 +29,59 @@
     };
 
     RequestDecoration.prototype.featureVal = function(key) {
-      if (this.featureVals[key] != null) {
-        return this.featureVals[key];
-      } else {
-        return null;
-      }
+      return this.featureVals[key] || null;
     };
 
     RequestDecoration.prototype.getFeatureVals = function() {
       return this.featureVals;
     };
 
-    RequestDecoration.prototype.lookupFeature = function(path, nodes, enabledOverride) {
-      var current;
-      if (enabledOverride == null) {
-        enabledOverride = null;
-      }
-      current = path.shift();
-      if (enabledOverride != null) {
-        nodes.e = enabledOverride;
-      }
-      if ((current != null) && (nodes != null)) {
-        if (nodes.e == null) {
-          enabledOverride = false;
+    RequestDecoration.prototype.enable = function(feature) {
+      var current, parts;
+      if (_.has(this.toggleConfig, this.makeFeaturePath(feature))) {
+        parts = feature.split('.');
+        current = '';
+        while (parts.length > 0) {
+          current += (current ? '.' : '') + parts.shift();
+          if (_.get(this.toggleConfig, this.makeFeaturePath(current) + '.exclusiveSplit')) {
+            this.del(this.config, current);
+          }
+          _.set(this.config, current + '.e', 1);
         }
-        if ((enabledOverride != null) && enabledOverride === false) {
-          return false;
-        }
-        return this.lookupFeature(path, nodes[current], enabledOverride);
+        this.cookie(this.toggleName(), JSON.stringify(this.config), this.toggleConfig.cookieOptions);
+      }
+      return this;
+    };
+
+    RequestDecoration.prototype.disable = function(feature) {
+      if (_.has(this.toggleConfig, this.makeFeaturePath(feature))) {
+        this.del(this.config, feature);
+        this.cookie(this.toggleName(), JSON.stringify(this.config), this.toggleConfig.cookieOptions);
+      }
+      return this;
+    };
+
+    RequestDecoration.prototype.toggleName = function() {
+      return "ftoggle-" + this.toggleConfig.name;
+    };
+
+    RequestDecoration.prototype.makeFeaturePath = function(feature) {
+      return 'features.' + feature.split('.').join('.features.');
+    };
+
+    RequestDecoration.prototype.del = function(obj, prop) {
+      var parts, subobj, subpath;
+      if (prop.indexOf('.') === -1) {
+        delete obj[prop];
       } else {
-        return nodes;
+        parts = prop.split('.');
+        subpath = parts.slice(0, -1).join('.');
+        subobj = _.get(obj, subpath);
+        if (_.isPlainObject(subobj)) {
+          delete subobj[parts[parts.length - 1]];
+        }
       }
+      return obj;
     };
 
     return RequestDecoration;

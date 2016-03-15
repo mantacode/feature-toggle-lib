@@ -1,47 +1,60 @@
 _ = if (typeof window isnt 'undefined' and window._) then window._ else require('lodash')
 
 module.exports = class RequestDecoration
-  constructor: (@config, @featureVals = {}, @toggleConfig = {}) ->
+  constructor: (@config, @cookie, @featureVals = {}, @toggleConfig = {}) ->
 
   isFeatureEnabled: (feature, trueCallback, falseCallback) ->
-    featureNodes = @lookupFeature(feature.split("."), _.clone(@config))
-    if enabled = (featureNodes? && (featureNodes != false) && featureNodes.e)
-      trueCallback?(feature)
-    else
-      falseCallback?(feature)
-    Boolean(enabled)
+    _.has @config, feature
 
   findEnabledChildren: (prefix) ->
-    p = []
-    p = prefix.split(".") if prefix?
-    feature = @lookupFeature(p, @config)
-    return [] unless feature
-    children = _.filter(_.keys(feature), (k) ->
-      feature[k].e == 1
-    )
-    if children? then children else []
+    _(_.get(@config, prefix)).keys().without('e').value()
 
   doesFeatureExist: (feature) ->
-    _.has @toggleConfig, 'features.' + feature.replace('.', '.features.')
+    _.has @toggleConfig, @makeFeaturePath(feature)
 
   getFeatures: () ->
     @config
 
   featureVal: (key) ->
-    if @featureVals[key]? then @featureVals[key] else null
+    @featureVals[key] or null
 
   getFeatureVals: () ->
     @featureVals
 
-  #private
+  enable: (feature) ->
+    if _.has @toggleConfig, @makeFeaturePath(feature)
+      parts = feature.split('.')
+      current = ''
+      while parts.length > 0
+        current += (if current then '.' else '') + parts.shift()
 
-  lookupFeature: (path, nodes, enabledOverride = null) ->
-    current = path.shift()
-    nodes.e = enabledOverride if enabledOverride?
-    if current? && nodes?
-      enabledOverride = false if !nodes.e?
-      if enabledOverride? && enabledOverride == false
-        return false
-      @lookupFeature(path, nodes[current], enabledOverride)
+        if _.get(@toggleConfig, @makeFeaturePath(current) + '.exclusiveSplit')
+          @del @config, current
+
+        _.set(@config, current + '.e', 1)
+
+      @cookie(@toggleName(), JSON.stringify(@config), @toggleConfig.cookieOptions)
+    this
+
+  disable: (feature) ->
+    if _.has @toggleConfig, @makeFeaturePath(feature)
+      @del @config, feature
+      @cookie(@toggleName(), JSON.stringify(@config), @toggleConfig.cookieOptions)
+    this
+
+  #private
+  
+  toggleName: -> "ftoggle-#{@toggleConfig.name}"
+
+  makeFeaturePath: (feature) -> 'features.' + feature.split('.').join('.features.')
+
+  del: (obj, prop) ->
+    if prop.indexOf('.') == -1
+      delete obj[ prop ]
     else
-      nodes
+      parts = prop.split('.')
+      subpath = parts.slice(0, -1).join('.')
+      subobj = _.get obj, subpath
+      if _.isPlainObject(subobj)
+        delete subobj[ parts[parts.length - 1] ]
+    return obj
