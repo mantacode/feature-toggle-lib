@@ -8,11 +8,12 @@
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-coffee": "^0.13.0",
     "grunt-jasmine-bundle": ">= 0.1.4",
+    "grunt-only": "^1.0.2",
     "sandboxed-module": "~0.3.0"
   },
   "dependencies": {
     "coffee-script": "^1.8.0",
     "grunt-contrib-watch": "^1.0.0",
-    "lodash": "^3.10.1"
+    "lodash": "^4.6.1"
   }
 }

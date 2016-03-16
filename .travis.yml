@@ -9,7 +9,7 @@ install:
   - "npm list -g grunt-cli --depth=0 || npm install -g grunt-cli"
   - "npm install"
 script:
-  - 'grunt spec'
+  - 'grunt ci'
 cache:
   directories:
     - "node_modules"

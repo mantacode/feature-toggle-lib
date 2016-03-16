@@ -1,15 +1,22 @@
 #global module:false
 
 module.exports = (grunt) ->
-  grunt.loadNpmTasks("grunt-jasmine-bundle")
-  grunt.loadNpmTasks("grunt-contrib-coffee")
-  grunt.loadNpmTasks("grunt-contrib-clean")
-  grunt.loadNpmTasks("grunt-browserify")
-  grunt.loadNpmTasks("grunt-contrib-watch")
+  grunt.loadNpmTasks('grunt-jasmine-bundle')
+  grunt.loadNpmTasks('grunt-contrib-coffee')
+  grunt.loadNpmTasks('grunt-contrib-clean')
+  grunt.loadNpmTasks('grunt-browserify')
+  grunt.loadNpmTasks('grunt-contrib-watch')
+  grunt.loadNpmTasks('grunt-only')
 
   grunt.initConfig
     spec:
       unit: {}
+
+    only:
+      dev:
+        options:
+          fail: false
+      ci: {}
 
     clean:
       dist: 'dist'
@@ -41,5 +48,6 @@ module.exports = (grunt) ->
           browserifyOptions:
             standalone: 'FtoggleRequestDecoration'
 
-  grunt.registerTask("default", ["spec:unit"])
+  grunt.registerTask('default', ['only:dev', 'spec:unit'])
   grunt.registerTask('build', ['clean:dist', 'coffee:compile', 'browserify'])
+  grunt.registerTask('ci', ['only:ci', 'spec:unit'])
