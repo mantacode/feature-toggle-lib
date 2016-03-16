@@ -12,11 +12,13 @@
     }
 
     RequestDecoration.prototype.isFeatureEnabled = function(feature, trueCallback, falseCallback) {
-      return _.has(this.config, feature);
+      return Boolean(_.get(this.config, feature + '.e'));
     };
 
     RequestDecoration.prototype.findEnabledChildren = function(prefix) {
-      return _(_.get(this.config, prefix)).keys().without('e').value();
+      var subset;
+      subset = prefix ? _.get(this.config, prefix) : this.config;
+      return _(subset).keys().without('e').value();
     };
 
     RequestDecoration.prototype.doesFeatureExist = function(feature) {
@@ -43,7 +45,7 @@
         while (parts.length > 0) {
           current += (current ? '.' : '') + parts.shift();
           if (_.get(this.toggleConfig, this.makeFeaturePath(current) + '.exclusiveSplit')) {
-            this.del(this.config, current);
+            _.unset(this.config, current);
           }
           _.set(this.config, current + '.e', 1);
         }
@@ -54,7 +56,7 @@
 
     RequestDecoration.prototype.disable = function(feature) {
       if (_.has(this.toggleConfig, this.makeFeaturePath(feature))) {
-        this.del(this.config, feature);
+        _.unset(this.config, feature);
         this.cookie(this.toggleName(), JSON.stringify(this.config), this.toggleConfig.cookieOptions);
       }
       return this;
@@ -66,21 +68,6 @@
 
     RequestDecoration.prototype.makeFeaturePath = function(feature) {
       return 'features.' + feature.split('.').join('.features.');
-    };
-
-    RequestDecoration.prototype.del = function(obj, prop) {
-      var parts, subobj, subpath;
-      if (prop.indexOf('.') === -1) {
-        delete obj[prop];
-      } else {
-        parts = prop.split('.');
-        subpath = parts.slice(0, -1).join('.');
-        subobj = _.get(obj, subpath);
-        if (_.isPlainObject(subobj)) {
-          delete subobj[parts[parts.length - 1]];
-        }
-      }
-      return obj;
     };
 
     return RequestDecoration;
