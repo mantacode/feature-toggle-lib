@@ -4,10 +4,11 @@ module.exports = class RequestDecoration
   constructor: (@config, @cookie, @featureVals = {}, @toggleConfig = {}) ->
 
   isFeatureEnabled: (feature, trueCallback, falseCallback) ->
-    _.has @config, feature
+    return Boolean(_.get(@config, feature + '.e'))
 
   findEnabledChildren: (prefix) ->
-    _(_.get(@config, prefix)).keys().without('e').value()
+    subset = if prefix then _.get(@config, prefix) else @config
+    return _(subset).keys().without('e').value()
 
   doesFeatureExist: (feature) ->
     _.has @toggleConfig, @makeFeaturePath(feature)
@@ -29,7 +30,7 @@ module.exports = class RequestDecoration
         current += (if current then '.' else '') + parts.shift()
 
         if _.get(@toggleConfig, @makeFeaturePath(current) + '.exclusiveSplit')
-          @del @config, current
+          _.unset @config, current
 
         _.set(@config, current + '.e', 1)
 
@@ -38,7 +39,7 @@ module.exports = class RequestDecoration
 
   disable: (feature) ->
     if _.has @toggleConfig, @makeFeaturePath(feature)
-      @del @config, feature
+      _.unset @config, feature
       @cookie(@toggleName(), JSON.stringify(@config), @toggleConfig.cookieOptions)
     this
 
@@ -47,14 +48,3 @@ module.exports = class RequestDecoration
   toggleName: -> "ftoggle-#{@toggleConfig.name}"
 
   makeFeaturePath: (feature) -> 'features.' + feature.split('.').join('.features.')
-
-  del: (obj, prop) ->
-    if prop.indexOf('.') == -1
-      delete obj[ prop ]
-    else
-      parts = prop.split('.')
-      subpath = parts.slice(0, -1).join('.')
-      subobj = _.get obj, subpath
-      if _.isPlainObject(subobj)
-        delete subobj[ parts[parts.length - 1] ]
-    return obj

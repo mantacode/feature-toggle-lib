@@ -14,9 +14,8 @@ module.exports = class BuildsFeatureVals
       _.tap {}, (here) =>
         return if userConfig.e != 1
         here = _.extend here, @confFor(toggleConfig)
-        _(userConfig).omit(@specialKeys).each((v, k) =>
+        _(userConfig).omit(@specialKeys).each (v, k) =>
           here = _.extend here, @build(v, toggleConfig["features"][k])
-        ).value()
 
     #private
 

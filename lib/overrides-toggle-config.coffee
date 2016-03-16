@@ -1,3 +1,5 @@
+_ = if (typeof window isnt 'undefined' and window._) then window._ else require('lodash')
+
 module.exports = class OverridesToggleConfig
   constructor: (@config, @userConfig) ->
 
@@ -5,7 +7,10 @@ module.exports = class OverridesToggleConfig
     return this unless overrides?
     overrides.split(",").forEach (v) =>
       if (@doesFeatureExist(v, @config))
-        @applyToggles(v.split("."), @config, @userConfig, enable)
+        if enable
+          @applyToggles(v.split("."), @config, @userConfig, 1)
+        else
+          _.unset @userConfig, v
     return this
 
   #private
@@ -16,8 +21,9 @@ module.exports = class OverridesToggleConfig
     data[thisPart].e = val
     if config.exclusiveSplit
       Object.keys(data).forEach (k) ->
-        if typeof data[k] == 'object' && data[k].e?
-          data[k].e = !val unless k == thisPart
+        delete data[k]
+        if k == thisPart
+          data[k] = { e: 1 }
     if parts.length > 0
       @applyToggles(parts, config.features[thisPart], data[thisPart], val)
 
@@ -32,6 +38,6 @@ module.exports = class OverridesToggleConfig
       if path.length > 0
         @lookupFeature(path, nodes.features[current], enabledOverride)
       else
-        return true
+        return 1
     else
-      return false
+      return 0

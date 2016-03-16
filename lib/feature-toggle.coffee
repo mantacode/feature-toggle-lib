@@ -74,8 +74,8 @@ module.exports = class FeatureToggle
 
   overrideByHeader: (userConfig, req) ->
     new OverridesToggleConfig(@toggleConfig, userConfig).
-      override(req.headers["x-#{@toggleName()}-on"], true).
-      override(req.headers["x-#{@toggleName()}-off"], false)
+      override(req.headers["x-#{@toggleName()}-on"], 1).
+      override(req.headers["x-#{@toggleName()}-off"], 0)
 
   createUserConfig: (cookie, bot) ->
     # If a cookie is already set and it's current, then we'll

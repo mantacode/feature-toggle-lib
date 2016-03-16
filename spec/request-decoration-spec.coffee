@@ -1,4 +1,4 @@
-describe.only "Request decoration", ->
+describe "Request decoration", ->
   Given -> @subject = requireSubject 'lib/request-decoration'
 
   describe '.isFeatureEnabled', ->
