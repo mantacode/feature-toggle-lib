@@ -5,8 +5,8 @@
   _ = typeof window !== 'undefined' && window._ ? window._ : require('lodash');
 
   module.exports = RequestDecoration = (function() {
-    function RequestDecoration(config, cookie, featureVals, toggleConfig) {
-      this.config = config;
+    function RequestDecoration(config1, cookie, featureVals, toggleConfig) {
+      this.config = config1;
       this.cookie = cookie;
       this.featureVals = featureVals != null ? featureVals : {};
       this.toggleConfig = toggleConfig != null ? toggleConfig : {};
@@ -38,17 +38,48 @@
       return this.featureVals;
     };
 
+    RequestDecoration.prototype.setFeatures = function(ftr) {
+      var featureConf;
+      featureConf = _.get(this.toggleConfig, ftr + '.conf');
+      _.each(featureConf, (function(_this) {
+        return function(v, k) {
+          return _this.featureVals[k] = v;
+        };
+      })(this));
+      return this;
+    };
+
+    RequestDecoration.prototype.unsetFeatures = function(ftr) {
+      var featureConf;
+      featureConf = _.get(this.toggleConfig, ftr + '.conf');
+      _.each(featureConf, (function(_this) {
+        return function(v, k) {
+          return delete _this.featureVals[k];
+        };
+      })(this));
+      return this;
+    };
+
     RequestDecoration.prototype.enable = function(feature) {
-      var current, parts;
-      if (_.has(this.toggleConfig, this.makeFeaturePath(feature))) {
+      var current, currentConfig, featurePath, innerFeaturePath, parts;
+      featurePath = this.makeFeaturePath(feature);
+      if (_.has(this.toggleConfig, featurePath)) {
         parts = feature.split('.');
         current = '';
         while (parts.length > 0) {
           current += (current ? '.' : '') + parts.shift();
-          if (_.get(this.toggleConfig, this.makeFeaturePath(current) + '.exclusiveSplit')) {
+          innerFeaturePath = this.makeFeaturePath(current);
+          currentConfig = _.get(this.toggleConfig, innerFeaturePath);
+          if (currentConfig != null ? currentConfig.exclusiveSplit : void 0) {
             _.unset(this.config, current);
+            _.each(currentConfig.features, (function(_this) {
+              return function(v, k) {
+                return _this.unsetFeatures(innerFeaturePath + '.features.' + k);
+              };
+            })(this));
           }
           _.set(this.config, current + '.e', 1);
+          this.setFeatures(innerFeaturePath);
         }
         this.cookie(this.toggleName(), JSON.stringify(this.config), this.toggleConfig.cookieOptions);
       }
@@ -56,8 +87,16 @@
     };
 
     RequestDecoration.prototype.disable = function(feature) {
-      if (_.has(this.toggleConfig, this.makeFeaturePath(feature))) {
+      var featurePath;
+      featurePath = this.makeFeaturePath(feature);
+      if (_.has(this.toggleConfig, featurePath)) {
         _.unset(this.config, feature);
+        this.unsetFeatures(featurePath);
+        _.each(this.getAllChildNodes(this.toggleConfig, featurePath), (function(_this) {
+          return function(node) {
+            return _this.unsetFeatures(node);
+          };
+        })(this));
         this.cookie(this.toggleName(), JSON.stringify(this.config), this.toggleConfig.cookieOptions);
       }
       return this;
@@ -69,6 +108,22 @@
 
     RequestDecoration.prototype.makeFeaturePath = function(feature) {
       return 'features.' + feature.split('.').join('.features.');
+    };
+
+    RequestDecoration.prototype.getAllChildNodes = function(config, path) {
+      var thisConfig;
+      thisConfig = _.get(config, path + '.features');
+      return _.reduce(thisConfig, (function(_this) {
+        return function(memo, v, k) {
+          var inner;
+          inner = path + '.features.' + k;
+          memo.push(inner);
+          _.each(_this.getAllChildNodes(thisConfig, k), function(child) {
+            return memo.push(path + '.features.' + child);
+          });
+          return memo;
+        };
+      })(this), []);
     };
 
     return RequestDecoration;
