@@ -22,24 +22,46 @@ module.exports = class RequestDecoration
   getFeatureVals: () ->
     @featureVals
 
+  setFeatures: (ftr) ->
+    featureConf = _.get @toggleConfig, ftr + '.conf'
+    _.each featureConf, (v, k) =>
+      @featureVals[k] = v
+    this
+
+  unsetFeatures: (ftr) ->
+    featureConf = _.get @toggleConfig, ftr + '.conf'
+    _.each featureConf, (v, k) =>
+      delete @featureVals[k]
+    this
+
   enable: (feature) ->
-    if _.has @toggleConfig, @makeFeaturePath(feature)
+    featurePath = @makeFeaturePath(feature)
+    if _.has @toggleConfig, featurePath
       parts = feature.split('.')
       current = ''
       while parts.length > 0
         current += (if current then '.' else '') + parts.shift()
+        innerFeaturePath = @makeFeaturePath(current)
 
-        if _.get(@toggleConfig, @makeFeaturePath(current) + '.exclusiveSplit')
+        currentConfig = _.get(@toggleConfig, innerFeaturePath)
+        if currentConfig?.exclusiveSplit
           _.unset @config, current
+          _.each currentConfig.features, (v, k) =>
+            @unsetFeatures(innerFeaturePath + '.features.' + k)
 
         _.set(@config, current + '.e', 1)
+        @setFeatures(innerFeaturePath)
 
       @cookie(@toggleName(), JSON.stringify(@config), @toggleConfig.cookieOptions)
     this
 
   disable: (feature) ->
-    if _.has @toggleConfig, @makeFeaturePath(feature)
+    featurePath = @makeFeaturePath(feature)
+    if _.has @toggleConfig, featurePath
       _.unset @config, feature
+      @unsetFeatures(featurePath)
+      _.each @getAllChildNodes(@toggleConfig, featurePath), (node) =>
+        @unsetFeatures(node)
       @cookie(@toggleName(), JSON.stringify(@config), @toggleConfig.cookieOptions)
     this
 
@@ -48,3 +70,13 @@ module.exports = class RequestDecoration
   toggleName: -> "ftoggle-#{@toggleConfig.name}"
 
   makeFeaturePath: (feature) -> 'features.' + feature.split('.').join('.features.')
+
+  getAllChildNodes: (config, path) ->
+    thisConfig = _.get(config, path + '.features')
+    return _.reduce(thisConfig, (memo, v, k) =>
+      inner = path + '.features.' + k
+      memo.push(inner)
+      _.each @getAllChildNodes(thisConfig, k), (child) ->
+        memo.push(path + '.features.' + child)
+      return memo
+    , [])

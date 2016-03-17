@@ -99,20 +99,43 @@ describe "Request decoration", ->
       features:
         foo:
           traffic: 1
+          conf:
+            banana: true
           features:
             bar:
               traffic: 1
+              conf:
+                apple: true
             baz:
               traffic: 0
+              conf:
+                apricot: true
         favoriteFruit:
           traffic: 1
           exclusiveSplit: 1
           features:
             banana:
               traffic: 0.5
+              conf:
+                yellow: true
             apple:
               traffic: 0.5
-    Given -> @ftoggle = new @subject(@config, @cookie, {}, @toggleConfig)
+              conf:
+                red: true
+        tree:
+          conf:
+            maple: true
+          traffic: 1
+          features:
+            trunk:
+              conf:
+                bark: true
+              traffic: 1
+    Given -> @featureVals =
+      banana: true
+      apple: true
+      red: true
+    Given -> @ftoggle = new @subject(@config, @cookie, @featureVals, @toggleConfig)
 
     context 'existing feature', ->
       When -> @ftoggle.enable 'foo.baz'
@@ -129,6 +152,11 @@ describe "Request decoration", ->
           apple:
             e: 1
       ), 'blah'
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
+        apple: true
+        apricot: true
+        red: true
 
     context 'non-existent feature', ->
       When -> @ftoggle.enable 'foo.quux'
@@ -143,6 +171,10 @@ describe "Request decoration", ->
           e: 1
           apple:
             e: 1
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
+        apple: true
+        red: true
 
     context 'exclusive split', ->
       When -> @ftoggle.enable 'favoriteFruit.banana'
@@ -157,6 +189,34 @@ describe "Request decoration", ->
           banana:
             e: 1
       ), 'blah'
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
+        apple: true
+        yellow: true
+
+    context 'completely new tree path', ->
+      When -> @ftoggle.enable 'tree.trunk'
+      Then -> expect(@cookie).toHaveBeenCalledWith 'ftoggle-test', JSON.stringify(
+        e: 1
+        foo:
+          e: 1
+          bar:
+            e: 1
+        favoriteFruit:
+          e: 1
+          apple:
+            e: 1
+        tree:
+          e: 1
+          trunk:
+            e: 1
+      ), 'blah'
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
+        apple: true
+        red: true
+        maple: true
+        bark: true
 
   describe '.disable', ->
     Given -> @config =
@@ -165,6 +225,12 @@ describe "Request decoration", ->
         e: 1
         bar:
           e: 1
+      tree:
+        e: 1
+        trunk:
+          e: 1
+          limb:
+            e: 1
     Given -> @cookie = jasmine.createSpy 'cookie'
     Given -> @toggleConfig =
       name: 'test'
@@ -175,7 +241,28 @@ describe "Request decoration", ->
           features:
             bar:
               traffic: 1
-    Given -> @ftoggle = new @subject(@config, @cookie, {}, @toggleConfig)
+              conf:
+                banana: true
+        tree:
+          traffic: 1
+          conf:
+            maple: true
+          features:
+            trunk:
+              traffic: 1
+              conf:
+                trunk: true
+              features:
+                limb:
+                  traffic: 1
+                  conf:
+                    branches: true
+    Given -> @featureVals =
+      banana: true
+      maple: true
+      trunk: true
+      branches: true
+    Given -> @ftoggle = new @subject(@config, @cookie, @featureVals, @toggleConfig)
 
     context 'existing feature', ->
       When -> @ftoggle.disable 'foo.bar'
@@ -183,7 +270,17 @@ describe "Request decoration", ->
         e: 1
         foo:
           e: 1
+        tree:
+          e: 1
+          trunk:
+            e: 1
+            limb:
+              e: 1
       ), 'blah')
+      And -> expect(@ftoggle.featureVals).toEqual
+        maple: true
+        trunk: true
+        branches: true
 
     context 'non-existent feature', ->
       When -> @ftoggle.disable 'foo.quux'
@@ -194,3 +291,26 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+        tree:
+          e: 1
+          trunk:
+            e: 1
+            limb:
+              e: 1
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
+        maple: true
+        trunk: true
+        branches: true
+
+    context 'whole tree', ->
+      When -> @ftoggle.disable 'tree'
+      Then -> expect(@cookie).toHaveBeenCalledWith('ftoggle-test', JSON.stringify(
+        e: 1
+        foo:
+          e: 1
+          bar:
+            e: 1
+      ), 'blah')
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
