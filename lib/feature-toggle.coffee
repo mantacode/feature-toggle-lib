@@ -27,10 +27,11 @@ module.exports = class FeatureToggle
       @overrideByHeader(userConfig, req)
       @overrideByQueryParam(userConfig, req)
       featureVals = @createFeatureVals(userConfig)
-      req.ftoggle = new RequestDecoration(userConfig, featureVals, @toggleConfig)
       cookieOptions = @toggleConfig.cookieOptions || {}
       for k, v of defaults
         cookieOptions[k] = cookieOptions[k] or v
+      @toggleConfig.cookieOptions = cookieOptions
+      req.ftoggle = new RequestDecoration(userConfig, res.cookie.bind(res), featureVals, @toggleConfig)
       res.cookie(@toggleName(), JSON.stringify(userConfig), cookieOptions)
       next()
 
@@ -73,8 +74,8 @@ module.exports = class FeatureToggle
 
   overrideByHeader: (userConfig, req) ->
     new OverridesToggleConfig(@toggleConfig, userConfig).
-      override(req.headers["x-#{@toggleName()}-on"], true).
-      override(req.headers["x-#{@toggleName()}-off"], false)
+      override(req.headers["x-#{@toggleName()}-on"], 1).
+      override(req.headers["x-#{@toggleName()}-off"], 0)
 
   createUserConfig: (cookie, bot) ->
     # If a cookie is already set and it's current, then we'll

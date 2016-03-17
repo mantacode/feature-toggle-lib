@@ -534,12 +534,9 @@ describe "FeatureToggle", ->
                 traffic: 0
               f:
                 traffic: 1
-      Then ->
-        @req.ftoggle.findEnabledChildren()[0] == 'b'
-      And ->
-        @req.ftoggle.findEnabledChildren('a').length == 0
-      And ->
-        @req.ftoggle.findEnabledChildren('b')[0] == 'f'
+      Then -> @req.ftoggle.findEnabledChildren()[0] == 'b'
+      And -> @req.ftoggle.findEnabledChildren('a').length == 0
+      And -> @req.ftoggle.findEnabledChildren('b')[0] == 'f'
 
   describe "middleware sets cookie", ->
     Given -> @subject.setConfig

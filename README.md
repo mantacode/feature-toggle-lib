@@ -28,7 +28,7 @@ var config = {
   }
 };
 
-var FeatureToggle = require('ftoggle');
+var FeatureToggle = require('feature-toggle-lib');
 var ftoggle = new FeatureToggle();
 ftoggle.setConfig(config);
 
@@ -38,7 +38,9 @@ app.use(ftoggle.newMiddleware());
 
 ```
 
-You can call ```ftoggle.isFeatureEnabled``` in your request handlers:
+This adds a RequestDecoration instance to the request object, accessible via `req.ftoggle`.
+
+You can call ```req.ftoggle.isFeatureEnabled``` in your request handlers:
 
 ```
 if (req.ftoggle.isFeatureEnabled('feature_1')) { ...
@@ -50,16 +52,19 @@ For hierarchical/nested feature toggles:
 if (req.ftoggle.isFeatureEnabled('feature_2.subfeature_2_1')) { ...
 ```
 
-If you want to dispatch to some callbacks:
-
-```
-req.ftoggole.isFeatureEnabled('feature_1', yesFunction, noFunction);
-```
-
 You can opt into or out of features with a query parameter:
 
 ```
 http://foo.bar.com/?ftoggle-$configname-on=f1,f2,f3&ftoggle-$configname-off=f4,f5,f6
+```
+
+You can programmatically enable and disable treatments based on domain logic:
+
+```
+if (someDomainThing.isTrue()) {
+  req.ftoggle.enable('feature_1.subfeature_2');
+  req.ftoggle.disable('feature_2');
+}
 ```
 
 ## Client/Browser Usage
