@@ -16,17 +16,16 @@ module.exports = class OverridesToggleConfig
   #private
   applyToggles: (parts, config, data, val) ->
     thisPart = parts.shift()
-    unless data[thisPart]?
-      data[thisPart] = { e: val }
-    data[thisPart].e = val
     if config.exclusiveSplit
       Object.keys(data).forEach (k) ->
-        delete data[k]
-        if k == thisPart
-          data[k] = { e: 1 }
+        if k != 'e'
+          delete data[k]
+
+    data[thisPart] = data[thisPart] or {}
+    data[thisPart].e = 1
+
     if parts.length > 0
       @applyToggles(parts, config.features[thisPart], data[thisPart], val)
-
 
   doesFeatureExist: (feature, @config) ->
     return @lookupFeature(feature.split("."), @config)
