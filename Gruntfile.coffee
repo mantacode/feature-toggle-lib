@@ -10,8 +10,14 @@ module.exports = (grunt) ->
 
   grunt.initConfig
     spec:
-      unit: {}
-
+      unit:
+        options:
+          helpers: ['spec/helpers/**/*.coffee']
+          specs: ['spec/**/*.coffee']
+      e2e:
+        options:
+          helpers: ['spec-e2e/helpers/**/*.coffee']
+          specs: ['spec-e2e/**/*.coffee', '!spec-e2e/fixtures/**']
     only:
       dev:
         options:
@@ -32,6 +38,11 @@ module.exports = (grunt) ->
         tasks: ['spec:unit']
         options:
           atBegin: true
+      e2e:
+        files: ['lib/**', 'spec-e2e/**']
+        tasks: ['spec:e2e']
+        options:
+          atBegin: true
 
     browserify:
       dist:
@@ -48,6 +59,6 @@ module.exports = (grunt) ->
           browserifyOptions:
             standalone: 'FtoggleRequestDecoration'
 
-  grunt.registerTask('default', ['only:dev', 'spec:unit'])
+  grunt.registerTask('default', ['only:dev', 'spec'])
   grunt.registerTask('build', ['clean:dist', 'coffee:compile', 'browserify'])
-  grunt.registerTask('ci', ['only:ci', 'spec:unit'])
+  grunt.registerTask('ci', ['only:ci', 'spec'])

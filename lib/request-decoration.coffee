@@ -1,14 +1,14 @@
 _ = if (typeof window isnt 'undefined' and window._) then window._ else require('lodash')
 
 module.exports = class RequestDecoration
-  constructor: (@config, @cookie, @featureVals = {}, @toggleConfig = {}) ->
+  constructor: (@config, @featureVals = {}, @toggleConfig = {}) ->
 
   isFeatureEnabled: (feature, trueCallback, falseCallback) ->
     return Boolean(_.get(@config, feature + '.e'))
 
   findEnabledChildren: (prefix) ->
     subset = if prefix then _.get(@config, prefix) else @config
-    return _(subset).keys().without('e').value()
+    return _(subset).keys().without('e', 'v').value()
 
   doesFeatureExist: (feature) ->
     _.has @toggleConfig, @makeFeaturePath(feature)
@@ -51,8 +51,6 @@ module.exports = class RequestDecoration
 
         _.set(@config, current + '.e', 1)
         @setFeatures(innerFeaturePath)
-
-      @cookie(@toggleName(), JSON.stringify(@config), @toggleConfig.cookieOptions)
     this
 
   disable: (feature) ->
@@ -62,7 +60,6 @@ module.exports = class RequestDecoration
       @unsetFeatures(featurePath)
       _.each @getAllChildNodes(@toggleConfig, featurePath), (node) =>
         @unsetFeatures(node)
-      @cookie(@toggleName(), JSON.stringify(@config), @toggleConfig.cookieOptions)
     this
 
   #private

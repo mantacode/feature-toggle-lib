@@ -14,26 +14,28 @@ module.exports = class FeatureToggle
     @buildsFeatureVals = new BuildsFeatureVals()
     @unstickyFeatures = []
 
-  newMiddleware: ->
-    (req, res, next) =>
-      defaults = @getDefaults(req)
-      cookie = req.cookies[@toggleName()] or '{}'
-      try
-        cookie = JSON.parse(cookie)
-      catch e
-        res.clearCookie @toggleName(), { domain: '.manta.com', path: '/' }
-        cookie = {}
-      userConfig = @createUserConfig(cookie, if parseInt(req.headers["x-bot"]) then true else false)
-      @overrideByHeader(userConfig, req)
-      @overrideByQueryParam(userConfig, req)
-      featureVals = @createFeatureVals(userConfig)
-      cookieOptions = @toggleConfig.cookieOptions || {}
-      for k, v of defaults
-        cookieOptions[k] = cookieOptions[k] or v
-      @toggleConfig.cookieOptions = cookieOptions
-      req.ftoggle = new RequestDecoration(userConfig, res.cookie.bind(res), featureVals, @toggleConfig)
-      res.cookie(@toggleName(), JSON.stringify(userConfig), cookieOptions)
-      next()
+  createConfig: (req, res, next) =>
+    defaults = @getDefaults(req)
+    cookie = req.cookies[@toggleName()] or '{}'
+    try
+      cookie = JSON.parse(cookie)
+    catch e
+      res.clearCookie @toggleName(), { domain: '.manta.com', path: '/' }
+      cookie = {}
+    userConfig = @createUserConfig(cookie, if parseInt(req.headers["x-bot"]) then true else false)
+    @overrideByHeader(userConfig, req)
+    @overrideByQueryParam(userConfig, req)
+    featureVals = @createFeatureVals(userConfig)
+    cookieOptions = @toggleConfig.cookieOptions || {}
+    for k, v of defaults
+      cookieOptions[k] = cookieOptions[k] or v
+    @toggleConfig.cookieOptions = cookieOptions
+    req.ftoggle = new RequestDecoration(userConfig, featureVals, @toggleConfig)
+    next()
+
+  setCookie: (req, res, next) =>
+    res.cookie(@toggleName(), JSON.stringify(req.ftoggle.config), @toggleConfig.cookieOptions)
+    next()
 
   setConfig: (newConfig) ->
     @toggleConfig = newConfig
