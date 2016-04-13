@@ -3,7 +3,7 @@ request = require('supertest')
 req = request(app)
 _ = require('lodash')
 
-describe 'ftoggle', ->
+describe.only 'ftoggle', ->
   context 'sets config', ->
     Given -> @config = require('./fixtures/config.js')
     Given (done) -> req.get('/ftoggle-config').end (@err, @res) => done()

@@ -1,5 +1,5 @@
 describe "Request decoration", ->
-  Given -> @subject = requireSubject 'lib/request-decoration'
+  Given -> @subject = requireSubject 'lib/ftoggle'
 
   describe '.isFeatureEnabled', ->
     Given -> @config =
@@ -213,6 +213,75 @@ describe "Request decoration", ->
         maple: true
         bark: true
 
+  describe '.enableAll', ->
+    Given -> @config =
+      e: 1
+      foo:
+        e: 1
+        bar:
+          e: 1
+    Given -> @toggleConfig =
+      name: 'test'
+      cookieOptions: 'blah'
+      features:
+        foo:
+          traffic: 1
+          conf:
+            banana: true
+          features:
+            bar:
+              traffic: 1
+              conf:
+                apple: true
+            baz:
+              traffic: 0
+              conf:
+                apricot: true
+            quux:
+              traffic: 0
+              conf:
+                plum: true
+    Given -> @featureVals =
+      banana: true
+      apple: true
+    Given -> @ftoggle = new @subject(@config, @featureVals, @toggleConfig)
+
+    context 'with an array', ->
+      When -> @ftoggle.enableAll(['foo.baz', 'foo.quux'])
+      Then -> expect(@ftoggle.config).toEqual
+        e: 1
+        foo:
+          e: 1
+          bar:
+            e: 1
+          baz:
+            e: 1
+          quux:
+            e: 1
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
+        apple: true
+        apricot: true
+        plum: true
+
+    context 'with a comma-separated string', ->
+      When -> @ftoggle.enableAll('foo.baz,foo.quux')
+      Then -> expect(@ftoggle.config).toEqual
+        e: 1
+        foo:
+          e: 1
+          bar:
+            e: 1
+          baz:
+            e: 1
+          quux:
+            e: 1
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
+        apple: true
+        apricot: true
+        plum: true
+
   describe '.disable', ->
     Given -> @config =
       e: 1
@@ -305,3 +374,66 @@ describe "Request decoration", ->
             e: 1
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
+
+  describe '.disableAll', ->
+    Given -> @config =
+      e: 1
+      foo:
+        e: 1
+        bar:
+          e: 1
+        baz:
+          e: 1
+        quux:
+          e: 1
+    Given -> @toggleConfig =
+      name: 'test'
+      cookieOptions: 'blah'
+      features:
+        foo:
+          traffic: 1
+          conf:
+            banana: true
+          features:
+            bar:
+              traffic: 1
+              conf:
+                apple: true
+            baz:
+              traffic: 1
+              conf:
+                apricot: true
+            quux:
+              traffic: 1
+              conf:
+                plum: true
+    Given -> @featureVals =
+      banana: true
+      apple: true
+      apricot: true
+      plum: true
+    Given -> @ftoggle = new @subject(@config, @featureVals, @toggleConfig)
+
+    context 'with an array', ->
+      When -> @ftoggle.disableAll(['foo.baz', 'foo.quux'])
+      Then -> expect(@ftoggle.config).toEqual
+        e: 1
+        foo:
+          e: 1
+          bar:
+            e: 1
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
+        apple: true
+
+    context 'with a comma-separated string', ->
+      When -> @ftoggle.disableAll('foo.baz,foo.quux')
+      Then -> expect(@ftoggle.config).toEqual
+        e: 1
+        foo:
+          e: 1
+          bar:
+            e: 1
+      And -> expect(@ftoggle.featureVals).toEqual
+        banana: true
+        apple: true
