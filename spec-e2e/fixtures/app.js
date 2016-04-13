@@ -5,7 +5,7 @@ var main = require('../../package.json').main;
 var ftoggleLib = require('../../' + main);
 
 var ftoggle = new ftoggleLib();
-ftoggle.setConfig(require('./config.js'));
+ftoggle.setConfig(require('./ftoggle.js')).addConfig(require('./config.js'));
 
 app.use(cookies());
 app.use(ftoggle.createConfig);

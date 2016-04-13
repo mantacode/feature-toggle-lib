@@ -3,9 +3,9 @@ request = require('supertest')
 req = request(app)
 _ = require('lodash')
 
-describe.only 'ftoggle', ->
+describe 'ftoggle', ->
   context 'sets config', ->
-    Given -> @config = require('./fixtures/config.js')
+    Given -> @config = require('./fixtures/final.js')
     Given (done) -> req.get('/ftoggle-config').end (@err, @res) => done()
     Then -> expect(JSON.parse(@res.text)).toEqual @config
 

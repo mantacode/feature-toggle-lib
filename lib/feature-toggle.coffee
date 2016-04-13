@@ -2,7 +2,6 @@ math = require('./math')
 Ftoggle = require('./ftoggle.js')
 BuildsUserConfig = require('./builds-user-config')
 buildFeatureVals = require('./builds-feature-vals.js')
-merger = require('./merger')
 _ = require 'lodash'
 
 module.exports = class FeatureToggle
@@ -39,7 +38,8 @@ module.exports = class FeatureToggle
     this
 
   addConfig: (newFeatureConf) ->
-    @toggleConfig = merger.merge(@toggleConfig, newFeatureConf)
+    @toggleConfig = _.merge(@toggleConfig, newFeatureConf)
+    this
 
   #private
 
