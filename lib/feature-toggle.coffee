@@ -1,6 +1,6 @@
 Ftoggle = require('./ftoggle')
-buildsUserConfig = require('./builds-user-config')
-buildFeatureVals = require('./builds-feature-vals')
+confBuilder = require('./user-config')
+featureBuilder = require('./feature-vals')
 _ = require 'lodash'
 
 module.exports = class FeatureToggle
@@ -16,7 +16,7 @@ module.exports = class FeatureToggle
     catch e
       cookie = {}
     userConfig = @createUserConfig(cookie, if parseInt(req.headers["x-bot"]) then true else false)
-    featureVals = buildFeatureVals(userConfig, @toggleConfig)
+    featureVals = featureBuilder.build(userConfig, @toggleConfig)
 
     cookieOptions = @toggleConfig.cookieOptions || {}
     for k, v of defaults
@@ -64,7 +64,7 @@ module.exports = class FeatureToggle
       return cookie
     else
       # If there's no cookie, build the whole thing now
-      buildsUserConfig.build(@toggleConfig, false, bot)
+      confBuilder.build(@toggleConfig, false, bot)
 
   cookieIsCurrent: (cookie) ->
     return false unless cookie?
