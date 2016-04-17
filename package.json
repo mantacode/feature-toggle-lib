@@ -1,6 +1,6 @@
 {
   "name": "feature-toggle-lib",
-  "main": "./main.js",
+  "main": "./lib/feature-toggle",
   "version": "1.3.0",
   "devDependencies": {
     "cookie-parser": "^1.4.1",

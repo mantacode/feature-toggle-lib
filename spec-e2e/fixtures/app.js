@@ -1,14 +1,13 @@
 var cookies = require('cookie-parser');
 var express = require('express');
 var app = module.exports = express();
-var main = require('../../package.json').main;
-var ftoggleLib = require('../../' + main);
+var ftoggleLib = require('../../lib/feature-toggle');
 
 var ftoggle = new ftoggleLib();
 ftoggle.setConfig(require('./ftoggle.js')).addConfig(require('./config.js'));
 
 app.use(cookies());
-app.use(ftoggle.createConfig);
+app.use(ftoggle.createConfig.bind(ftoggle));
 
 app.get('/ftoggle-config', function(req, res, next) {
   req.jsonResponse = req.ftoggle.toggleConfig;
@@ -57,7 +56,7 @@ app.get('/disable/:feature', function(req, res, next) {
   next();
 });
 
-app.use(ftoggle.setCookie);
+app.use(ftoggle.setCookie.bind(ftoggle));
 app.use(function(req, res, next) {
   res.status(200).json(req.jsonResponse);
 });
