@@ -1,14 +1,12 @@
-math = require('./math')
-Ftoggle = require('./ftoggle.js')
-BuildsUserConfig = require('./builds-user-config')
-buildFeatureVals = require('./builds-feature-vals.js')
+Ftoggle = require('./ftoggle')
+buildsUserConfig = require('./builds-user-config')
+buildFeatureVals = require('./builds-feature-vals')
 _ = require 'lodash'
 
 module.exports = class FeatureToggle
 
   constructor: ->
     @toggleConfig = {}
-    @buildsUserConfig = new BuildsUserConfig(math)
 
   createConfig: (req, res, next) =>
     defaults = @getDefaults(req)
@@ -66,7 +64,7 @@ module.exports = class FeatureToggle
       return cookie
     else
       # If there's no cookie, build the whole thing now
-      @buildsUserConfig.build(@toggleConfig, {}, false, bot)
+      buildsUserConfig.build(@toggleConfig, false, bot)
 
   cookieIsCurrent: (cookie) ->
     return false unless cookie?
