@@ -7,7 +7,8 @@ describe 'ftoggle', ->
   context 'sets config', ->
     Given -> @config = require('./fixtures/final.js')
     Given (done) -> req.get('/ftoggle-config').end (@err, @res) => done()
-    #Given -> @cookie = JSON.parse(decodeURIComponent(@res.headers['set-cookie'][0].split(';')[0].split('=')[1]))
+    Given -> @cookie = @res.headers['set-cookie'][0].split(';')[0].split('=')[1]
+    Given -> console.log @cookie
     Then -> expect(JSON.parse(@res.text)).toEqual @config
 
   context 'sets toggles based on traffic', ->

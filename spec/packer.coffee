@@ -29,7 +29,7 @@ describe "lib/packer", ->
           quux: 0
         blah:
           hello: 1
-      )).toBe 'F|3'
+      )).toBe 'Fz3'
 
     context 'more than 5 chars', ->
       Then -> expect(@subject.pack(
@@ -48,7 +48,7 @@ describe "lib/packer", ->
           c:
             a: 0
         c: 1
-      )).toBe 'YA|2'
+      )).toBe 'YAz2'
 
     context 'lower and upper thresholds are @ and _', ->
       Then -> expect(@subject.pack(
@@ -64,11 +64,11 @@ describe "lib/packer", ->
           c: 1
           d: 1
           e: 1
-      )).toBe '@_|5'
+      )).toBe 'a_z5'
 
   describe '.unpack', ->
     context 'less than 5 chars', ->
-      Then -> expect(@subject.unpack('F|3',
+      Then -> expect(@subject.unpack('Fz3',
         foo:
           bar:
             baz: 0
@@ -84,7 +84,7 @@ describe "lib/packer", ->
           hello: 1
       
     context 'more than 5 chars', ->
-      Then -> expect(@subject.unpack('YA|2',
+      Then -> expect(@subject.unpack('YAz2',
         a:
           a:
             a: 0
@@ -118,7 +118,7 @@ describe "lib/packer", ->
         c: 1
 
     context 'lower and upper thresholds are @ and _', ->
-      Then -> expect(@subject.unpack('@_|5',
+      Then -> expect(@subject.unpack('a_z5',
         a:
           a: 0
           b: 0
