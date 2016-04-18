@@ -7,6 +7,7 @@ describe 'ftoggle', ->
   context 'sets config', ->
     Given -> @config = require('./fixtures/final.js')
     Given (done) -> req.get('/ftoggle-config').end (@err, @res) => done()
+    #Given -> @cookie = JSON.parse(decodeURIComponent(@res.headers['set-cookie'][0].split(';')[0].split('=')[1]))
     Then -> expect(JSON.parse(@res.text)).toEqual @config
 
   context 'sets toggles based on traffic', ->
@@ -16,7 +17,7 @@ describe 'ftoggle', ->
     And -> expect(@config.v).toBe 2
     And -> expect(@config.foo).toEqual e: 1
     And -> expect(@config.treatments.e).toBe 1
-    And -> expect(@config.treatments).toHaveOneEnabled 'treatment_a', 'treatment_b'
+    And -> expect(@config.treatments.treatment_a.e + @config.treatments.treatment_b.e).toBe 1
 
   context 'sets features', ->
     Given (done) -> req.get('/features').end (@err, @res) => done()
