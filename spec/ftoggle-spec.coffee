@@ -1,4 +1,4 @@
-describe "Request decoration", ->
+describe 'ftoggle', ->
   Given -> @subject = requireSubject 'lib/ftoggle'
 
   describe '.isFeatureEnabled', ->
@@ -88,10 +88,18 @@ describe "Request decoration", ->
         e: 1
         bar:
           e: 1
+        baz:
+          e: 0
       favoriteFruit:
         e: 1
         apple:
           e: 1
+        banana:
+          e: 0
+      tree:
+        e: 0
+        trunk:
+          e: 0
     Given -> @toggleConfig =
       name: 'test'
       cookieOptions: 'blah'
@@ -150,6 +158,12 @@ describe "Request decoration", ->
           e: 1
           apple:
             e: 1
+          banana:
+            e: 0
+        tree:
+          e: 0
+          trunk:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
@@ -164,10 +178,18 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
         favoriteFruit:
           e: 1
           apple:
             e: 1
+          banana:
+            e: 0
+        tree:
+          e: 0
+          trunk:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
@@ -181,10 +203,18 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
         favoriteFruit:
           e: 1
+          apple:
+            e: 0
           banana:
             e: 1
+        tree:
+          e: 0
+          trunk:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
@@ -198,10 +228,14 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
         favoriteFruit:
           e: 1
           apple:
             e: 1
+          banana:
+            e: 0
         tree:
           e: 1
           trunk:
@@ -333,6 +367,8 @@ describe "Request decoration", ->
         e: 1
         foo:
           e: 1
+          bar:
+            e: 0
         tree:
           e: 1
           trunk:
@@ -372,6 +408,12 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+        tree:
+          e: 0
+          trunk:
+            e: 0
+            limb:
+              e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
 
@@ -422,6 +464,10 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
+          quux:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
@@ -434,6 +480,10 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
+          quux:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
