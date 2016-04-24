@@ -1,5 +1,7 @@
 describe 'ftoggle', ->
-  Given -> @subject = requireSubject 'lib/ftoggle'
+  Given -> @packer = jasmine.createSpyObj 'packer', ['pack', 'unpack']
+  Given -> @subject = requireSubject 'lib/ftoggle',
+    './packer': @packer
 
   describe '.isFeatureEnabled', ->
     Given -> @config =
@@ -487,3 +489,13 @@ describe 'ftoggle', ->
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
+
+  describe '.getPackedConfig', ->
+    Given -> @ftoggle = new @subject 'config'
+    When -> @ftoggle.getPackedConfig()
+    Then -> expect(@packer.pack).toHaveBeenCalledWith 'config'
+
+  describe '.getUnpackedConfig', ->
+    Given -> @ftoggle = new @subject 'config'
+    When -> @ftoggle.getUnpackedConfig 'cookie', 'conf'
+    Then -> expect(@packer.unpack).toHaveBeenCalledWith 'cookie', 'conf'
