@@ -2,7 +2,6 @@
 
 module.exports = (grunt) ->
   grunt.loadNpmTasks('grunt-jasmine-bundle')
-  grunt.loadNpmTasks('grunt-contrib-coffee')
   grunt.loadNpmTasks('grunt-contrib-clean')
   grunt.loadNpmTasks('grunt-browserify')
   grunt.loadNpmTasks('grunt-contrib-watch')

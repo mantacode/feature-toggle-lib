@@ -8,7 +8,6 @@
     "grunt": "~0.4.1",
     "grunt-browserify": "^4.0.0",
     "grunt-contrib-clean": "^0.6.0",
-    "grunt-contrib-coffee": "^0.13.0",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-jasmine-bundle": ">= 0.1.4",
     "grunt-only": "^1.0.2",
