@@ -26,11 +26,6 @@ module.exports = (grunt) ->
     clean:
       dist: 'dist'
 
-    coffee:
-      compile:
-        files:
-          'dist/request-decoration.js': 'lib/request-decoration.coffee'
-
     watch:
       unit:
         files: ['lib/**/*.coffee', 'spec/**/*.coffee']
@@ -46,18 +41,18 @@ module.exports = (grunt) ->
     browserify:
       dist:
         files:
-          'dist/feature-toggle-lib.js': 'dist/request-decoration.js',
+          'dist/ftoggle.js': 'lib/ftoggle.js',
         options:
           browserifyOptions:
-            standalone: 'FtoggleRequestDecoration'
+            standalone: 'Ftoggle'
       standalone:
         files:
-          'dist/feature-toggle-lib-standalone.js': 'dist/request-decoration.js'
+          'dist/ftoggle-standalone.js': 'lib/ftoggle.js'
         options:
           exclude: ['lodash']
           browserifyOptions:
-            standalone: 'FtoggleRequestDecoration'
+            standalone: 'Ftoggle'
 
   grunt.registerTask('default', ['only:dev', 'spec'])
-  grunt.registerTask('build', ['clean:dist', 'coffee:compile', 'browserify'])
+  grunt.registerTask('build', ['clean:dist', 'browserify'])
   grunt.registerTask('ci', ['only:ci', 'spec'])
