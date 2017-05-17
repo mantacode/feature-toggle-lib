@@ -1,5 +1,5 @@
 describe "Builds Feature Vals", ->
-  Given -> @subject = requireSubject 'lib/feature-vals'
+  Given -> @subject = require '../lib/feature-vals'
 
   describe "you got what I need", ->
     Given -> @userConfig =

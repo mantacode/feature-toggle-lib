@@ -1,5 +1,5 @@
 describe "Request decoration", ->
-  Given -> @subject = requireSubject 'lib/ftoggle'
+  Given -> @subject = require '../lib/ftoggle'
 
   describe '.isFeatureEnabled', ->
     Given -> @config =
