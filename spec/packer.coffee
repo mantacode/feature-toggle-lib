@@ -1,5 +1,5 @@
 describe "lib/packer", ->
-  Given -> @subject = requireSubject 'lib/packer'
+  Given -> @subject = require '../lib/packer'
 
   describe '.sort', ->
     Then -> expect(@subject.sort(
@@ -80,6 +80,7 @@ describe "lib/packer", ->
         blah:
           hello: 0
       )).toEqual
+        v: 2
         foo:
           bar:
             baz: 1
@@ -105,6 +106,7 @@ describe "lib/packer", ->
             a: 0
         c: 0
       )).toEqual
+        v: 2
         a:
           a:
             a: 1
@@ -136,6 +138,7 @@ describe "lib/packer", ->
           d: 0
           e: 0
       )).toEqual
+        v: 2
         a:
           a: 0
           b: 0

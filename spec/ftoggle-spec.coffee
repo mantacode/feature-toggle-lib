@@ -1,7 +1,12 @@
+clear = require 'clear-require'
 describe 'ftoggle', ->
   Given -> @packer = jasmine.createSpyObj 'packer', ['pack', 'unpack']
-  Given -> @subject = requireSubject 'lib/ftoggle',
+  Given -> @subject = require('proxyquire').noCallThru() '../lib/ftoggle',
     './packer': @packer
+  
+  # Without this, the e2e specs fail when run at the same time (e.g. with
+  # the default grunt task) because 'packer' is still stubbed within lib/ftoggle
+  afterEach -> clear('../lib/ftoggle')
 
   describe '.isFeatureEnabled', ->
     Given -> @config =
@@ -496,6 +501,5 @@ describe 'ftoggle', ->
     Then -> expect(@packer.pack).toHaveBeenCalledWith 'config'
 
   describe '.getUnpackedConfig', ->
-    Given -> @ftoggle = new @subject 'config'
-    When -> @ftoggle.getUnpackedConfig 'cookie', 'conf'
+    When -> @subject.getUnpackedConfig 'cookie', 'conf'
     Then -> expect(@packer.unpack).toHaveBeenCalledWith 'cookie', 'conf'
