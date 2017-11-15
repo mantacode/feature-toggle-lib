@@ -139,7 +139,7 @@ Ftoggle.prototype.getPackedConfig = function() {
   return packer.pack(this.config);
 };
 
-Ftoggle.prototype.getUnpackedConfig = function(cookie, conf) {
+Ftoggle.getUnpackedConfig = function(cookie, conf) {
   return packer.unpack(cookie, conf);
 };
 
@@ -312,7 +312,9 @@ exports.unpack = function(str, config) {
   // Put our config array back into an object
   var unsorted = construct(sorted);
   // And return an unflattened version
-  return flatten.unflatten(unsorted);
+  var flat = flatten.unflatten(unsorted);
+  flat.v = Number(str.split('z')[0]);
+  return flat;
 };
 
 },{"flat":3,"lodash":5}],3:[function(require,module,exports){
