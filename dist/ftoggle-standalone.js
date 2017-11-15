@@ -327,10 +327,10 @@ function flatten(target, opts) {
 
   var delimiter = opts.delimiter || '.'
   var maxDepth = opts.maxDepth
-  var currentDepth = 1
   var output = {}
 
-  function step(object, prev) {
+  function step(object, prev, currentDepth) {
+    currentDepth = currentDepth ? currentDepth : 1
     Object.keys(object).forEach(function(key) {
       var value = object[key]
       var isarray = opts.safe && Array.isArray(value)
@@ -345,13 +345,9 @@ function flatten(target, opts) {
         ? prev + delimiter + key
         : key
 
-      if (!opts.maxDepth) {
-        maxDepth = currentDepth + 1;
-      }
-
-      if (!isarray && !isbuffer && isobject && Object.keys(value).length && currentDepth < maxDepth) {
-        ++currentDepth
-        return step(value, newKey)
+      if (!isarray && !isbuffer && isobject && Object.keys(value).length &&
+        (!opts.maxDepth || currentDepth < maxDepth)) {
+        return step(value, newKey, currentDepth + 1)
       }
 
       output[newKey] = value
@@ -427,22 +423,26 @@ function unflatten(target, opts) {
 }
 
 },{"is-buffer":4}],4:[function(require,module,exports){
-/**
- * Determine if an object is Buffer
+/*!
+ * Determine if an object is a Buffer
  *
- * Author:   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * License:  MIT
- *
- * `npm install is-buffer`
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
  */
 
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
 module.exports = function (obj) {
-  return !!(obj != null &&
-    (obj._isBuffer || // For Safari 5-7 (missing Object.prototype.constructor)
-      (obj.constructor &&
-      typeof obj.constructor.isBuffer === 'function' &&
-      obj.constructor.isBuffer(obj))
-    ))
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
 },{}]},{},[1])(1)
