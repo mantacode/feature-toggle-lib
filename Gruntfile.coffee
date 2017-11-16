@@ -28,7 +28,7 @@ module.exports = (grunt) ->
 
     watch:
       unit:
-        files: ['lib/**/*.coffee', 'spec/**/*.coffee']
+        files: ['lib/**/*.js', 'spec/**/*.coffee']
         tasks: ['spec:unit']
         options:
           atBegin: true

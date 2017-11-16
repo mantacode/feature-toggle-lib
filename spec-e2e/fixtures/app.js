@@ -7,7 +7,7 @@ var ftoggle = new ftoggleLib();
 ftoggle.setConfig(require('./ftoggle.js')).addConfig(require('./config.js'));
 
 app.use(cookies());
-app.use(ftoggle.createConfig.bind(ftoggle));
+app.use(ftoggle.createConfig);
 
 app.get('/ftoggle-config', function(req, res, next) {
   req.jsonResponse = req.ftoggle.toggleConfig;
@@ -56,7 +56,7 @@ app.get('/disable/:feature', function(req, res, next) {
   next();
 });
 
-app.use(ftoggle.setCookie.bind(ftoggle));
+app.use(ftoggle.setCookie);
 app.use(function(req, res, next) {
   res.status(200).json(req.jsonResponse);
 });

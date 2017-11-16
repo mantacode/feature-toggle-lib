@@ -1,5 +1,12 @@
-describe "Request decoration", ->
-  Given -> @subject = require '../lib/ftoggle'
+clear = require 'clear-require'
+describe 'ftoggle', ->
+  Given -> @packer = jasmine.createSpyObj 'packer', ['pack', 'unpack']
+  Given -> @subject = require('proxyquire').noCallThru() '../lib/ftoggle',
+    './packer': @packer
+  
+  # Without this, the e2e specs fail when run at the same time (e.g. with
+  # the default grunt task) because 'packer' is still stubbed within lib/ftoggle
+  afterEach -> clear('../lib/ftoggle')
 
   describe '.isFeatureEnabled', ->
     Given -> @config =
@@ -88,10 +95,18 @@ describe "Request decoration", ->
         e: 1
         bar:
           e: 1
+        baz:
+          e: 0
       favoriteFruit:
         e: 1
         apple:
           e: 1
+        banana:
+          e: 0
+      tree:
+        e: 0
+        trunk:
+          e: 0
     Given -> @toggleConfig =
       name: 'test'
       cookieOptions: 'blah'
@@ -150,6 +165,12 @@ describe "Request decoration", ->
           e: 1
           apple:
             e: 1
+          banana:
+            e: 0
+        tree:
+          e: 0
+          trunk:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
@@ -164,10 +185,18 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
         favoriteFruit:
           e: 1
           apple:
             e: 1
+          banana:
+            e: 0
+        tree:
+          e: 0
+          trunk:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
@@ -181,10 +210,18 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
         favoriteFruit:
           e: 1
+          apple:
+            e: 0
           banana:
             e: 1
+        tree:
+          e: 0
+          trunk:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
@@ -198,10 +235,14 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
         favoriteFruit:
           e: 1
           apple:
             e: 1
+          banana:
+            e: 0
         tree:
           e: 1
           trunk:
@@ -333,6 +374,8 @@ describe "Request decoration", ->
         e: 1
         foo:
           e: 1
+          bar:
+            e: 0
         tree:
           e: 1
           trunk:
@@ -372,6 +415,12 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+        tree:
+          e: 0
+          trunk:
+            e: 0
+            limb:
+              e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
 
@@ -422,6 +471,10 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
+          quux:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
@@ -434,6 +487,19 @@ describe "Request decoration", ->
           e: 1
           bar:
             e: 1
+          baz:
+            e: 0
+          quux:
+            e: 0
       And -> expect(@ftoggle.featureVals).toEqual
         banana: true
         apple: true
+
+  describe '.getPackedConfig', ->
+    Given -> @ftoggle = new @subject 'config'
+    When -> @ftoggle.getPackedConfig()
+    Then -> expect(@packer.pack).toHaveBeenCalledWith 'config'
+
+  describe '.getUnpackedConfig', ->
+    When -> @subject.getUnpackedConfig 'cookie', 'conf'
+    Then -> expect(@packer.unpack).toHaveBeenCalledWith 'cookie', 'conf'
