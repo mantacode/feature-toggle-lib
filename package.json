@@ -13,6 +13,7 @@
     "grunt-contrib-watch": "^1.0.0",
     "grunt-jasmine-bundle": ">= 0.1.4",
     "grunt-only": "^1.0.2",
+    "listify": "^1.0.0",
     "proxyquire": "^1.8.0",
     "supertest": "^1.2.0"
   },

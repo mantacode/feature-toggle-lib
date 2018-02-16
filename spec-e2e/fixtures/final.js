@@ -1,10 +1,5 @@
 module.exports = {
   version: 2,
-  cookieOptions: {
-    domain: '.0.0.1',
-    path: '/',
-    maxAge: 63072000000
-  },
   name: 'test',
   conf: {
     topEnabled: true

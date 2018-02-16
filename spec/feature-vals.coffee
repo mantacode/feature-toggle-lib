@@ -1,7 +1,7 @@
-describe "Builds Feature Vals", ->
+describe 'Builds Feature Vals', ->
   Given -> @subject = require '../lib/feature-vals'
 
-  describe "you got what I need", ->
+  describe 'you got what I need', ->
     Given -> @userConfig =
       e: 1
       v: 2
@@ -12,12 +12,12 @@ describe "Builds Feature Vals", ->
     When -> @conf = @subject.build(@userConfig, @toggleConfig)
     Then -> expect(@conf).toEqual(@toggleConfig.conf)
 
-  describe "not too bad", ->
+  describe 'not too bad', ->
     Given -> @toggleConfig = {}
     When -> @conf = @subject.build(@userConfig, @toggleConfig)
     Then -> expect(@conf).toEqual({})
 
-  describe "really? Nothing?", ->
+  describe 'really? Nothing?', ->
     Given -> @toggleConfig = null
     When -> @conf = @subject.build(@userConfig, @toggleConfig)
     Then -> expect(@conf).toEqual({})

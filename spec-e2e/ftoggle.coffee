@@ -1,31 +1,27 @@
-app = require('./fixtures/app.js')
-request = require('supertest')
-req = request(app)
 _ = require('lodash')
+Ftl = require('../lib/feature-toggle')
+ftoggle = require('./fixtures/ftoggle')
+config = require('./fixtures/config')
+final = require('./fixtures/final')
 
 describe 'ftoggle', ->
-  Given -> @getFtoggleCookie = (res) ->
-    res.headers['set-cookie'][0].split(';')[0].split('=')[1]
+  Given -> @subject =  new Ftl()
+  Given -> @subject.setConfig(ftoggle).addConfig(config)
+  Given -> @ftoggle = @subject.createConfig()
 
   context 'sets config', ->
-    Given -> @config = require('./fixtures/final.js')
-    Given (done) -> req.get('/ftoggle-config').end (@err, @res) => done()
-    Given -> @cookie = @getFtoggleCookie(@res)
-    Then -> expect(JSON.parse(@res.text)).toEqual @config
-    And -> expect(['2zLaEz3', '2zLaFz3']).toContain @cookie
+    Then -> expect(@ftoggle.toggleConfig).toEqual final
+    And -> expect(@ftoggle.getPackedConfig()).toBeOneOf '2zLaEz3', '2zLaFz3'
 
   context 'sets toggles based on traffic', ->
-    Given (done) -> req.get('/user-config').end (@err, @res) => done()
-    When -> @config = JSON.parse(@res.text)
-    Then -> expect(@config.e).toBe 1
-    And -> expect(@config.v).toBe 2
-    And -> expect(@config.foo).toEqual e: 1
-    And -> expect(@config.treatments.e).toBe 1
-    And -> expect(@config.treatments.treatment_a.e + @config.treatments.treatment_b.e).toBe 1
+    Then -> expect(@ftoggle.config.e).toBe 1
+    And -> expect(@ftoggle.config.v).toBe 2
+    And -> expect(@ftoggle.config.foo).toEqual e: 1
+    And -> expect(@ftoggle.config.treatments.e).toBe 1
+    And -> expect(@ftoggle.config.treatments.treatment_a.e + @ftoggle.config.treatments.treatment_b.e).toBe 1
 
   context 'sets features', ->
-    Given (done) -> req.get('/features').end (@err, @res) => done()
-    When -> @features = JSON.parse(@res.text)
+    When -> @features = @ftoggle.getFeatureVals()
     Then -> expect(@features.topEnabled).toBe true
     And -> expect(@features.fooEnabled).toBe true
     And -> expect(@features).toHaveOneEnabled 'treatmentAEnabled', 'treatmentBEnabled'
@@ -37,54 +33,41 @@ describe 'ftoggle', ->
 
   context 'isFeatureEnabled', ->
     context 'returns true for enabled features', ->
-      Given (done) -> req.get('/isFeatureEnabled/foo').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toEqual enabled: true
+      Then -> expect(@ftoggle.isFeatureEnabled('foo')).toBe true
 
     context 'returns true for enabled features', ->
-      Given (done) -> req.get('/isFeatureEnabled/bar').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toEqual enabled: false
+      Then -> expect(@ftoggle.isFeatureEnabled('bar')).toBe false
 
   context 'findEnabledChildren', ->
     context 'top level', ->
-      Given (done) -> req.get('/findEnabledChildren').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toEqual ['foo', 'treatments']
+      Then -> expect(@ftoggle.findEnabledChildren()).toEqual ['foo', 'treatments']
 
     context 'lower level', ->
-      Given (done) -> req.get('/findEnabledChildren/treatments').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toContainOneOf 'treatment_a', 'treatment_b'
+      Then -> expect(@ftoggle.findEnabledChildren('treatments')).toContainOneOf 'treatment_a', 'treatment_b'
 
   context 'doesFeatureExist', ->
     context 'existing and enabled feature', ->
-      Given (done) -> req.get('/doesFeatureExist/foo').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toEqual exists: true
+      Then -> expect(@ftoggle.doesFeatureExist('foo')).toBe true
 
     context 'existing and disabled feature', ->
-      Given (done) -> req.get('/doesFeatureExist/bar').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toEqual exists: true
+      Then -> expect(@ftoggle.doesFeatureExist('bar')).toBe true
 
     context 'nested feaure', ->
-      Given (done) -> req.get('/doesFeatureExist/treatments.treatment_a').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toEqual exists: true
+      Then -> expect(@ftoggle.doesFeatureExist('treatments.treatment_a')).toBe true
 
     context 'non-existent feature', ->
-      Given (done) -> req.get('/doesFeatureExist/chicken').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toEqual exists: false
+      Then -> expect(@ftoggle.doesFeatureExist('chicken')).toBe false
 
   context 'featureVal', ->
     context 'feature is set', ->
-      Given (done) -> req.get('/featureVal/fooEnabled').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toEqual val: true
+      Then -> expect(@ftoggle.featureVal('fooEnabled')).toBe true
 
     context 'feature is unset', ->
-      Given (done) -> req.get('/featureVal/barEnabled').end (@err, @res) => done()
-      Then -> expect(JSON.parse(@res.text)).toEqual val: null
+      Then -> expect(@ftoggle.featureVal('barEnabled')).toBe null
 
   context 'uses current cookie', ->
-    Given (done) ->
-      req.get('/user-config')
-        .set('Cookie', "ftoggle-test=2zLaEz3")
-        .end (@err, @res) => done()
-    Then -> expect(JSON.parse(@res.text)).toEqual
+    Given -> @ftoggle = @subject.createConfig('2zLaEz3')
+    Then -> expect(@ftoggle.config).toEqual
       v: 2
       e: 1
       foo:
@@ -113,34 +96,15 @@ describe 'ftoggle', ->
             e: 0
 
   context 'does not use old cookie', ->
-    Given (done) ->
-      req.get('/user-config')
-        .set('Cookie', "ftoggle-test=1zLaEz3")
-        .end (@err, @res) => done()
-    Given -> @cookie = @getFtoggleCookie(@res)
-    Then -> expect(@cookie).not.toEqual '1zLaEz3'
-
-  context 'with a cookie, overridden by query', ->
-    Given (done) ->
-      req.get('/user-config?ftoggle-test-on=treatments.treatment_a,fruits.banana.yellow_banana&ftoggle-test-off=bar')
-        .set('Cookie', "ftoggle-test=2zLaEz3")
-        .end (@err, @res) => done()
-    Given -> @cookie = @getFtoggleCookie(@res)
-    Then -> expect(@cookie).toEqual '2zLKFz3'
+    Given -> @ftoggle = @subject.createConfig('1zLaEz3')
+    Then -> expect(@ftoggle.getPackedConfig()).not.toEqual '1zLaEz3'
 
   context 'programmatically enable a feature', ->
-    Given (done) ->
-      req.get('/enable/fruits')
-        .set('Cookie', "ftoggle-test=2zLaEz3")
-        .end (@err, @res) => done()
-    Given -> @cookie = @getFtoggleCookie(@res)
-    Then -> expect(@cookie).toBe '2zLAEz3'
-    And -> expect(@res.headers['set-cookie'].length).toBe 1
+    Given -> @ftoggle = @subject.createConfig('2zLaEz3')
+    Given -> @ftoggle.enable('fruits')
+    Then -> expect(@ftoggle.getPackedConfig()).toBe '2zLAEz3'
 
   context 'programmatically disable a feature', ->
-    Given (done) ->
-      req.get('/disable/fruits')
-        .set('Cookie', "ftoggle-test=2zLAEz3")
-        .end (@err, @res) => done()
-    Given -> @cookie = @getFtoggleCookie(@res)
-    Then -> expect(@cookie).toBe '2zLaEz3'
+    Given -> @ftoggle = @subject.createConfig('2zLAEz3')
+    Given -> @ftoggle.disable('fruits')
+    Then -> expect(@ftoggle.getPackedConfig()).toBe '2zLaEz3'

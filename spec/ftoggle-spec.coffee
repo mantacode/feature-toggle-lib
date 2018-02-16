@@ -1,4 +1,5 @@
 clear = require 'clear-require'
+
 describe 'ftoggle', ->
   Given -> @packer = jasmine.createSpyObj 'packer', ['pack', 'unpack']
   Given -> @subject = require('proxyquire').noCallThru() '../lib/ftoggle',
