@@ -1,31 +1,31 @@
 module.exports = {
-  conf: {
+  settings: {
     topEnabled: true
   },
   features: {
     foo: {
-      conf: {
+      settings: {
         fooEnabled: true
       }
     },
     bar: {
-      conf: {
+      settings: {
         barEnabled: true
       }
     },
     treatments: {
-      conf: {
+      settings: {
         treatmentsEnabled: true,
         topOfSplitEnabled: true
       },
       features: {
         treatment_a: {
-          conf: {
+          settings: {
             treatmentAEnabled: true
           }
         },
         treatment_b: {
-          conf: {
+          settings: {
             treatmentBEnabled: true,
             topOfSplitEnabled: false
           }
@@ -33,23 +33,23 @@ module.exports = {
       }
     },
     fruits: {
-      conf: {
+      settings: {
         fruitsEnabled: true
       },
       features: {
         banana: {
-          conf: {
+          settings: {
             bananaEnabled: true
           },
           features: {
             yellow_banana: {
-              conf: {
+              settings: {
                 yelloBananaEnabled: true,
                 greenBananaEnabled: false
               }
             },
             green_banana: {
-              conf: {
+              settings: {
                 greenBananaEnabled: true,
                 yellowBananaEnabled: false
               }
@@ -57,18 +57,18 @@ module.exports = {
           }
         },
         apple: {
-          conf: { 
+          settings: { 
             appleEnabled: true
           },
           features: {
             green_apple: {
-              conf: {
+              settings: {
                 greenAppleEnabled: true,
                 redAppleEnabled: false
               }
             },
             red_apple: {
-              conf: {
+              settings: {
                 redAppleEnabled: true,
                 greenAppleEnabled: false
               }

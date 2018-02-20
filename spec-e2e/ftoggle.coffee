@@ -1,27 +1,27 @@
 _ = require('lodash')
 Ftl = require('../lib/feature-toggle')
-ftoggle = require('./fixtures/ftoggle')
+featureConfig = require('./fixtures/ftoggle')
 config = require('./fixtures/config')
 final = require('./fixtures/final')
 
 describe 'ftoggle', ->
   Given -> @subject =  new Ftl()
-  Given -> @subject.setConfig(ftoggle).addConfig(config)
-  Given -> @ftoggle = @subject.createConfig()
+  Given -> @subject.setConfig(featureConfig).addConfig(config)
+  Given -> @ftoggle = @subject.create()
 
   context 'sets config', ->
-    Then -> expect(@ftoggle.toggleConfig).toEqual final
-    And -> expect(@ftoggle.getPackedConfig()).toBeOneOf '2zLaEz3', '2zLaFz3'
+    Then -> expect(@ftoggle.featureConfig).toEqual final
+    And -> expect(@ftoggle.serialize()).toBeOneOf '2zLaEz3', '2zLaFz3'
 
   context 'sets toggles based on traffic', ->
-    Then -> expect(@ftoggle.config.e).toBe 1
-    And -> expect(@ftoggle.config.v).toBe 2
-    And -> expect(@ftoggle.config.foo).toEqual e: 1
-    And -> expect(@ftoggle.config.treatments.e).toBe 1
-    And -> expect(@ftoggle.config.treatments.treatment_a.e + @ftoggle.config.treatments.treatment_b.e).toBe 1
+    Then -> expect(@ftoggle.toggles.e).toBe 1
+    And -> expect(@ftoggle.toggles.v).toBe 2
+    And -> expect(@ftoggle.toggles.foo).toEqual e: 1
+    And -> expect(@ftoggle.toggles.treatments.e).toBe 1
+    And -> expect(@ftoggle.toggles.treatments.treatment_a.e + @ftoggle.toggles.treatments.treatment_b.e).toBe 1
 
   context 'sets features', ->
-    When -> @features = @ftoggle.getFeatureVals()
+    When -> @features = @ftoggle.getSettings()
     Then -> expect(@features.topEnabled).toBe true
     And -> expect(@features.fooEnabled).toBe true
     And -> expect(@features).toHaveOneEnabled 'treatmentAEnabled', 'treatmentBEnabled'
@@ -58,16 +58,16 @@ describe 'ftoggle', ->
     context 'non-existent feature', ->
       Then -> expect(@ftoggle.doesFeatureExist('chicken')).toBe false
 
-  context 'featureVal', ->
+  context 'getSetting', ->
     context 'feature is set', ->
-      Then -> expect(@ftoggle.featureVal('fooEnabled')).toBe true
+      Then -> expect(@ftoggle.getSetting('fooEnabled')).toBe true
 
     context 'feature is unset', ->
-      Then -> expect(@ftoggle.featureVal('barEnabled')).toBe null
+      Then -> expect(@ftoggle.getSetting('barEnabled')).toBe null
 
-  context 'uses current cookie', ->
-    Given -> @ftoggle = @subject.createConfig('2zLaEz3')
-    Then -> expect(@ftoggle.config).toEqual
+  context 'uses current packed config', ->
+    Given -> @ftoggle = @subject.create('2zLaEz3')
+    Then -> expect(@ftoggle.toggles).toEqual
       v: 2
       e: 1
       foo:
@@ -95,16 +95,16 @@ describe 'ftoggle', ->
           yellow_banana:
             e: 0
 
-  context 'does not use old cookie', ->
-    Given -> @ftoggle = @subject.createConfig('1zLaEz3')
-    Then -> expect(@ftoggle.getPackedConfig()).not.toEqual '1zLaEz3'
+  context 'does not use old packed config', ->
+    Given -> @ftoggle = @subject.create('1zLaEz3')
+    Then -> expect(@ftoggle.serialize()).not.toEqual '1zLaEz3'
 
   context 'programmatically enable a feature', ->
-    Given -> @ftoggle = @subject.createConfig('2zLaEz3')
+    Given -> @ftoggle = @subject.create('2zLaEz3')
     Given -> @ftoggle.enable('fruits')
-    Then -> expect(@ftoggle.getPackedConfig()).toBe '2zLAEz3'
+    Then -> expect(@ftoggle.serialize()).toBe '2zLAEz3'
 
   context 'programmatically disable a feature', ->
-    Given -> @ftoggle = @subject.createConfig('2zLAEz3')
+    Given -> @ftoggle = @subject.create('2zLAEz3')
     Given -> @ftoggle.disable('fruits')
-    Then -> expect(@ftoggle.getPackedConfig()).toBe '2zLaEz3'
+    Then -> expect(@ftoggle.serialize()).toBe '2zLaEz3'
