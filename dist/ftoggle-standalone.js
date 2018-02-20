@@ -54,6 +54,10 @@ var Ftoggle = function () {
   }, {
     key: 'getSettingsForFeature',
     value: function getSettingsForFeature(feature) {
+      if (!feature) {
+        return {};
+      }
+
       return _.get(this.featureConfig, feature + '.settings');
     }
   }, {
