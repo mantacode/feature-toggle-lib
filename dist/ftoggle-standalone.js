@@ -9,23 +9,24 @@ var _ = require('./lodash');
 var packer = require('./packer');
 
 var Ftoggle = function () {
-  function Ftoggle(config, featureVals, toggleConfig) {
+  function Ftoggle(toggles, settings, featureConfig) {
     _classCallCheck(this, Ftoggle);
 
-    this.config = config;
-    this.toggleConfig = toggleConfig || {};
-    this.featureVals = featureVals || {};
+    this.toggles = toggles;
+    this.featureConfig = featureConfig || {};
+    this.settings = settings || {};
+    this.toggleName = 'ftoggle-' + this.featureConfig.name;
   }
 
   _createClass(Ftoggle, [{
     key: 'isFeatureEnabled',
     value: function isFeatureEnabled(feature) {
-      return Boolean(_.get(this.config, feature + '.e'));
+      return Boolean(_.get(this.toggles, feature + '.e'));
     }
   }, {
     key: 'findEnabledChildren',
     value: function findEnabledChildren(parent) {
-      var subset = parent ? _.get(this.config, parent) : this.config;
+      var subset = parent ? _.get(this.toggles, parent) : this.toggles;
       return _(subset).keys().without('e', 'v').filter(function (k) {
         return subset[k].e;
       }).value();
@@ -33,47 +34,47 @@ var Ftoggle = function () {
   }, {
     key: 'doesFeatureExist',
     value: function doesFeatureExist(feature) {
-      return _.has(this.toggleConfig, this.makeFeaturePath(feature));
+      return _.has(this.featureConfig, this.makeFeaturePath(feature));
     }
   }, {
-    key: 'getFeatures',
-    value: function getFeatures() {
-      return this.config;
+    key: 'getToggles',
+    value: function getToggles() {
+      return this.toggles;
     }
   }, {
-    key: 'featureVal',
-    value: function featureVal(key) {
-      return this.featureVals[key] || null;
+    key: 'getSetting',
+    value: function getSetting(key) {
+      return this.settings[key] || null;
     }
   }, {
-    key: 'getFeatureVals',
-    value: function getFeatureVals() {
-      return this.featureVals;
+    key: 'getSettings',
+    value: function getSettings() {
+      return this.settings;
     }
   }, {
-    key: 'getConfigForFeature',
-    value: function getConfigForFeature(feature) {
-      return _.get(this.toggleConfig, feature + '.conf');
+    key: 'getSettingsForFeature',
+    value: function getSettingsForFeature(feature) {
+      return _.get(this.featureConfig, feature + '.settings');
     }
   }, {
-    key: 'setFeatures',
-    value: function setFeatures(feature) {
+    key: 'setFeatureSettings',
+    value: function setFeatureSettings(feature) {
       var _this = this;
 
-      var featureConf = this.getConfigForFeature(feature);
+      var featureConf = this.getSettingsForFeature(feature);
       _.each(featureConf, function (value, key) {
-        _this.featureVals[key] = value;
+        _this.settings[key] = value;
       });
       return this;
     }
   }, {
-    key: 'unsetFeatures',
-    value: function unsetFeatures(feature) {
+    key: 'unsetFeatureSettings',
+    value: function unsetFeatureSettings(feature) {
       var _this2 = this;
 
-      var featureConf = this.getConfigForFeature(feature);
+      var featureConf = this.getSettingsForFeature(feature);
       _.each(featureConf, function (value, key) {
-        delete _this2.featureVals[key];
+        delete _this2.settings[key];
       });
       return this;
     }
@@ -83,25 +84,25 @@ var Ftoggle = function () {
       var _this3 = this;
 
       var featurePath = this.makeFeaturePath(feature);
-      if (_.has(this.toggleConfig, featurePath)) {
+      if (_.has(this.featureConfig, featurePath)) {
         var parts = feature.split('.');
         var current = '';
         var unset = function unset(innerFeaturePath) {
           return function (value, key) {
-            _this3.unsetFeatures(innerFeaturePath + '.features.' + key);
+            _this3.unsetFeatureSettings(innerFeaturePath + '.features.' + key);
           };
         };
         while (parts.length > 0) {
           current += (current ? '.' : '') + parts.shift();
           var innerFeaturePath = this.makeFeaturePath(current);
-          var currentConfig = _.get(this.toggleConfig, innerFeaturePath);
+          var currentConfig = _.get(this.featureConfig, innerFeaturePath);
           if (currentConfig && currentConfig.exclusiveSplit) {
-            this.unsetAll(_.get(this.config, current));
+            this.unsetAll(_.get(this.toggles, current));
             _.each(currentConfig.features, unset(innerFeaturePath));
           }
 
-          _.set(this.config, current + '.e', 1);
-          this.setFeatures(innerFeaturePath);
+          _.set(this.toggles, current + '.e', 1);
+          this.setFeatureSettings(innerFeaturePath);
         }
       }
       return this;
@@ -121,11 +122,11 @@ var Ftoggle = function () {
       var _this4 = this;
 
       var featurePath = this.makeFeaturePath(feature);
-      if (_.has(this.toggleConfig, featurePath)) {
-        this.unsetAll(_.get(this.config, feature));
-        this.unsetFeatures(featurePath);
-        _.each(this.getAllChildNodes(this.toggleConfig, featurePath), function (node) {
-          _this4.unsetFeatures(node);
+      if (_.has(this.featureConfig, featurePath)) {
+        this.unsetAll(_.get(this.toggles, feature));
+        this.unsetFeatureSettings(featurePath);
+        _.each(this.getAllChildNodes(this.featureConfig, featurePath), function (node) {
+          _this4.unsetFeatureSettings(node);
         });
       }
       return this;
@@ -140,21 +141,16 @@ var Ftoggle = function () {
       _.each(features, this.disable.bind(this));
     }
   }, {
-    key: 'toggleName',
-    value: function toggleName() {
-      return 'ftoggle-' + this.toggleConfig.name;
-    }
-  }, {
     key: 'makeFeaturePath',
     value: function makeFeaturePath(feature) {
       return 'features.' + feature.split('.').join('.features.');
     }
   }, {
     key: 'getAllChildNodes',
-    value: function getAllChildNodes(config, path) {
+    value: function getAllChildNodes(featureConfig, path) {
       var _this5 = this;
 
-      var thisConfig = _.get(config, path + '.features');
+      var thisConfig = _.get(featureConfig, path + '.features');
       return _.reduce(thisConfig, function (memo, val, key) {
         var inner = path + '.features.' + key;
         memo.push(inner);
@@ -166,20 +162,20 @@ var Ftoggle = function () {
     }
   }, {
     key: 'unsetAll',
-    value: function unsetAll(config) {
+    value: function unsetAll(toggles) {
       var _this6 = this;
 
-      config.e = 0;
-      _.each(config, function (val, key) {
+      toggles.e = 0;
+      _.each(toggles, function (val, key) {
         if (key !== 'e') {
-          _this6.unsetAll(config[key]);
+          _this6.unsetAll(toggles[key]);
         }
       });
     }
   }, {
-    key: 'getPackedConfig',
-    value: function getPackedConfig() {
-      return packer.pack(this.config);
+    key: 'serialize',
+    value: function serialize() {
+      return packer.pack(this.toggles);
     }
 
     // Not a typo. This is not on prototype because
@@ -187,9 +183,9 @@ var Ftoggle = function () {
     // that is required to create an instance of Ftoggle.
 
   }], [{
-    key: 'getUnpackedConfig',
-    value: function getUnpackedConfig(cookie, conf) {
-      return packer.unpack(cookie, conf);
+    key: 'deserialize',
+    value: function deserialize(serialization, toggles) {
+      return packer.unpack(serialization, toggles);
     }
   }]);
 
@@ -425,7 +421,7 @@ exports.unpack = function (str, config) {
     // Safety check in case (for example) we forget to bump ftoggle
     // and make changes that cause the number of keys to be different
     if (sorted[i]) {
-      // Assign the value of this toggle based on the cookied bit
+      // Assign the value of this toggle based on the packed bit
       sorted[i].val = bit;
     }
   });
