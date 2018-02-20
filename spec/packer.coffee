@@ -1,4 +1,4 @@
-describe "lib/packer", ->
+describe 'lib/packer', ->
   Given -> @subject = require '../lib/packer'
 
   describe '.sort', ->

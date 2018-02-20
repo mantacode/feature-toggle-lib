@@ -1,26 +1,26 @@
-describe "Builds Feature Vals", ->
-  Given -> @subject = require '../lib/feature-vals'
+describe 'Builds Feature Vals', ->
+  Given -> @subject = require '../lib/settings-builder'
 
-  describe "you got what I need", ->
-    Given -> @userConfig =
+  describe 'you got what I need', ->
+    Given -> @toggles =
       e: 1
       v: 2
-    Given -> @toggleConfig =
-      conf:
+    Given -> @featureConfig =
+      settings:
         one: 1
         two: 2
-    When -> @conf = @subject.build(@userConfig, @toggleConfig)
-    Then -> expect(@conf).toEqual(@toggleConfig.conf)
+    When -> @settings = @subject.build(@toggles, @featureConfig)
+    Then -> expect(@settings).toEqual(@featureConfig.settings)
 
-  describe "not too bad", ->
-    Given -> @toggleConfig = {}
-    When -> @conf = @subject.build(@userConfig, @toggleConfig)
-    Then -> expect(@conf).toEqual({})
+  describe 'not too bad', ->
+    Given -> @featureConfig = {}
+    When -> @settings = @subject.build(@toggles, @featureConfig)
+    Then -> expect(@settings).toEqual({})
 
-  describe "really? Nothing?", ->
-    Given -> @toggleConfig = null
-    When -> @conf = @subject.build(@userConfig, @toggleConfig)
-    Then -> expect(@conf).toEqual({})
+  describe 'really? Nothing?', ->
+    Given -> @featureConfig = null
+    When -> @settings = @subject.build(@toggles, @featureConfig)
+    Then -> expect(@settings).toEqual({})
 
 
 

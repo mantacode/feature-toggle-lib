@@ -1,154 +1,269 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Ftoggle = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var _ = typeof window !== 'undefined' && window._ ? window._ : require('lodash');
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _ = require('./lodash');
 var packer = require('./packer');
 
-var Ftoggle = module.exports = function(config, featureVals, toggleConfig) {
-  this.config = config;
-  this.toggleConfig = toggleConfig || {};
-  this.featureVals = featureVals || {};
-};
+var Ftoggle = function () {
+  function Ftoggle(toggles, settings, featureConfig) {
+    _classCallCheck(this, Ftoggle);
 
-Ftoggle.prototype.isFeatureEnabled = function(feature) {
-  return Boolean(_.get(this.config, feature + '.e'));
-};
+    this.toggles = toggles;
+    this.featureConfig = featureConfig || {};
+    this.settings = settings || {};
+    this.toggleName = 'ftoggle-' + this.featureConfig.name;
+  }
 
-Ftoggle.prototype.findEnabledChildren = function(parent) {
-  var subset = parent ? _.get(this.config, parent) : this.config;
-  return _(subset).keys().without('e', 'v').filter(function(k) {
-    return subset[k].e;
-  }).value()
-};
+  _createClass(Ftoggle, [{
+    key: 'isFeatureEnabled',
+    value: function isFeatureEnabled(feature) {
+      return Boolean(_.get(this.toggles, feature + '.e'));
+    }
+  }, {
+    key: 'findEnabledChildren',
+    value: function findEnabledChildren(parent) {
+      var subset = parent ? _.get(this.toggles, parent) : this.toggles;
+      return _(subset).keys().without('e', 'v').filter(function (k) {
+        return subset[k].e;
+      }).value();
+    }
+  }, {
+    key: 'doesFeatureExist',
+    value: function doesFeatureExist(feature) {
+      return _.has(this.featureConfig, this.makeFeaturePath(feature));
+    }
+  }, {
+    key: 'getToggles',
+    value: function getToggles() {
+      return this.toggles;
+    }
+  }, {
+    key: 'getSetting',
+    value: function getSetting(key) {
+      return this.settings[key] || null;
+    }
+  }, {
+    key: 'getSettings',
+    value: function getSettings() {
+      return this.settings;
+    }
+  }, {
+    key: 'getSettingsForFeature',
+    value: function getSettingsForFeature(feature) {
+      return _.get(this.featureConfig, feature + '.settings');
+    }
+  }, {
+    key: 'setFeatureSettings',
+    value: function setFeatureSettings(feature) {
+      var _this = this;
 
-Ftoggle.prototype.doesFeatureExist = function(feature) {
-  return _.has(this.toggleConfig, this.makeFeaturePath(feature));
-};
+      var featureConf = this.getSettingsForFeature(feature);
+      _.each(featureConf, function (value, key) {
+        _this.settings[key] = value;
+      });
+      return this;
+    }
+  }, {
+    key: 'unsetFeatureSettings',
+    value: function unsetFeatureSettings(feature) {
+      var _this2 = this;
 
-Ftoggle.prototype.getFeatures = function() {
-  return this.config;
-};
+      var featureConf = this.getSettingsForFeature(feature);
+      _.each(featureConf, function (value, key) {
+        delete _this2.settings[key];
+      });
+      return this;
+    }
+  }, {
+    key: 'enable',
+    value: function enable(feature) {
+      var _this3 = this;
 
-Ftoggle.prototype.featureVal = function(key) {
-  return this.featureVals[key] || null;
-};
+      var featurePath = this.makeFeaturePath(feature);
+      if (_.has(this.featureConfig, featurePath)) {
+        var parts = feature.split('.');
+        var current = '';
+        var unset = function unset(innerFeaturePath) {
+          return function (value, key) {
+            _this3.unsetFeatureSettings(innerFeaturePath + '.features.' + key);
+          };
+        };
+        while (parts.length > 0) {
+          current += (current ? '.' : '') + parts.shift();
+          var innerFeaturePath = this.makeFeaturePath(current);
+          var currentConfig = _.get(this.featureConfig, innerFeaturePath);
+          if (currentConfig && currentConfig.exclusiveSplit) {
+            this.unsetAll(_.get(this.toggles, current));
+            _.each(currentConfig.features, unset(innerFeaturePath));
+          }
 
-Ftoggle.prototype.getFeatureVals = function() {
-  return this.featureVals;
-};
-
-Ftoggle.prototype.getConfigForFeature = function(feature) {
-  return _.get(this.toggleConfig, feature + '.conf');
-};
-
-Ftoggle.prototype.setFeatures = function(feature) {
-  var featureConf = this.getConfigForFeature(feature);
-  _.each(featureConf, function(value, key) {
-    this.featureVals[key] = value;
-  }.bind(this));
-  return this;
-};
-
-Ftoggle.prototype.unsetFeatures = function(feature) {
-  var featureConf = this.getConfigForFeature(feature);
-  _.each(featureConf, function(value, key) {
-    delete this.featureVals[key];
-  }.bind(this));
-  return this;
-};
-
-Ftoggle.prototype.enable = function(feature) {
-  var featurePath = this.makeFeaturePath(feature);
-  if (_.has(this.toggleConfig, featurePath)) {
-    var parts = feature.split('.');
-    var current = '';
-    while (parts.length > 0) {
-      current += (current ? '.' : '') + parts.shift();
-      var innerFeaturePath = this.makeFeaturePath(current);
-      var currentConfig = _.get(this.toggleConfig, innerFeaturePath);
-      if (currentConfig && currentConfig.exclusiveSplit) {
-        this.unsetAll(_.get(this.config, current));
-        _.each(currentConfig.features, function(value, key) {
-          this.unsetFeatures(innerFeaturePath + '.features.' + key);
-        }.bind(this));
+          _.set(this.toggles, current + '.e', 1);
+          this.setFeatureSettings(innerFeaturePath);
+        }
+      }
+      return this;
+    }
+  }, {
+    key: 'enableAll',
+    value: function enableAll(features) {
+      if (!_.isArray(features)) {
+        features = features.split(',');
       }
 
-      _.set(this.config, current + '.e', 1);
-      this.setFeatures(innerFeaturePath);
+      _.each(features, this.enable.bind(this));
     }
-  }
-  return this;
-};
+  }, {
+    key: 'disable',
+    value: function disable(feature) {
+      var _this4 = this;
 
-Ftoggle.prototype.enableAll = function(features) {
-  if (!_.isArray(features)) {
-    features = features.split(',');
-  }
-  
-  _.each(features, this.enable.bind(this));
-};
-
-Ftoggle.prototype.disable = function(feature) {
-  var featurePath = this.makeFeaturePath(feature);
-  if (_.has(this.toggleConfig, featurePath)) {
-    this.unsetAll(_.get(this.config, feature));
-    this.unsetFeatures(featurePath);
-    _.each(this.getAllChildNodes(this.toggleConfig, featurePath), function(node) {
-      this.unsetFeatures(node);
-    }.bind(this));
-  }
-  return this;
-};
-
-Ftoggle.prototype.disableAll = function(features) {
-  if (!_.isArray(features)) {
-    features = features.split(',');
-  }
-
-  _.each(features, this.disable.bind(this));
-};
-
-Ftoggle.prototype.toggleName = function() {
-  return 'ftoggle-' + this.toggleConfig.name;
-};
-
-Ftoggle.prototype.makeFeaturePath = function(feature) {
-  return 'features.' + feature.split('.').join('.features.');
-};
-
-Ftoggle.prototype.getAllChildNodes = function(config, path) {
-  var thisConfig = _.get(config, path + '.features');
-  return _.reduce(thisConfig, function(memo, val, key) {
-    var inner = path + '.features.' + key;
-    memo.push(inner);
-    _.each(this.getAllChildNodes(thisConfig, key), function(child) {
-      memo.push(path + '.features.' + child);
-    });
-    return memo;
-  }.bind(this), []);
-};
-
-Ftoggle.prototype.unsetAll = function(config) {
-  config.e = 0;
-  _.each(config, function(val, key) {
-    if (key !== 'e') {
-      this.unsetAll(config[key]);
+      var featurePath = this.makeFeaturePath(feature);
+      if (_.has(this.featureConfig, featurePath)) {
+        this.unsetAll(_.get(this.toggles, feature));
+        this.unsetFeatureSettings(featurePath);
+        _.each(this.getAllChildNodes(this.featureConfig, featurePath), function (node) {
+          _this4.unsetFeatureSettings(node);
+        });
+      }
+      return this;
     }
-  }.bind(this));
-};
+  }, {
+    key: 'disableAll',
+    value: function disableAll(features) {
+      if (!_.isArray(features)) {
+        features = features.split(',');
+      }
 
-Ftoggle.prototype.getPackedConfig = function() {
-  return packer.pack(this.config);
-};
+      _.each(features, this.disable.bind(this));
+    }
+  }, {
+    key: 'makeFeaturePath',
+    value: function makeFeaturePath(feature) {
+      return 'features.' + feature.split('.').join('.features.');
+    }
+  }, {
+    key: 'getAllChildNodes',
+    value: function getAllChildNodes(featureConfig, path) {
+      var _this5 = this;
 
-// Not a typo. This is not on prototype because
-// you need this function to generate the config
-// that is required to create an instance of Ftoggle.
-Ftoggle.getUnpackedConfig = function(cookie, conf) {
-  return packer.unpack(cookie, conf);
-};
+      var thisConfig = _.get(featureConfig, path + '.features');
+      return _.reduce(thisConfig, function (memo, val, key) {
+        var inner = path + '.features.' + key;
+        memo.push(inner);
+        _.each(_this5.getAllChildNodes(thisConfig, key), function (child) {
+          memo.push(path + '.features.' + child);
+        });
+        return memo;
+      }, []);
+    }
+  }, {
+    key: 'unsetAll',
+    value: function unsetAll(toggles) {
+      var _this6 = this;
 
-},{"./packer":2,"lodash":undefined}],2:[function(require,module,exports){
-var flatten = require('flat');
+      toggles.e = 0;
+      _.each(toggles, function (val, key) {
+        if (key !== 'e') {
+          _this6.unsetAll(toggles[key]);
+        }
+      });
+    }
+  }, {
+    key: 'serialize',
+    value: function serialize() {
+      return packer.pack(this.toggles);
+    }
+
+    // Not a typo. This is not on prototype because
+    // you need this function to generate the config
+    // that is required to create an instance of Ftoggle.
+
+  }], [{
+    key: 'deserialize',
+    value: function deserialize(serialization, toggles) {
+      return packer.unpack(serialization, toggles);
+    }
+  }]);
+
+  return Ftoggle;
+}();
+
+module.exports = Ftoggle;
+
+},{"./lodash":2,"./packer":3}],2:[function(require,module,exports){
+'use strict';
+
 var _ = typeof window !== 'undefined' && window._ ? window._ : require('lodash');
+
+var mixins = {
+  // Walks an object "obj" and calls "onPrimitive" whenever it encounters a primitive value or array (unless
+  // "enterArrays" is true). If "enterArrays" is true, this function recurses into objects inside arrays as well.
+  // "currentPath" and "origObj" are internal params passed when this function calls itself, so do not pass them
+  // when you call it.
+  recurse: function recurse(obj, enterArrays, onPrimitive, currentPath, origObj) {
+    if (typeof enterArrays === 'function') {
+      onPrimitive = enterArrays;
+      enterArrays = false;
+    }
+
+    // Loop over keys in object
+    _.forOwn(obj, function (val, key) {
+      // Set the path at this point in the object. If this is the top level of the object, use just the key.
+      // Otherwise, add the key to any previously generated path (from a highler level).
+      var path = currentPath ? currentPath + '.' + key : key;
+      // If this property is an object, recurse into it
+      if (_.isPlainObject(val)) {
+        // Pass in the current path and object. Since "obj" changes on iterations (to nested object), we
+        // need to preserve the original top level object so that it can be passed to "onPrimitive" below.
+        mixins.recurse(val, enterArrays, onPrimitive, path, origObj || obj);
+      } else if (_.isArray(val) && enterArrays) {
+        // If "enterArrays" is true, loop through the array
+        _.each(val, function (innerObj, i) {
+          // Add the array index to the path
+          var innerPath = path + '.' + i;
+          if (_.isArray(innerObj) || _.isPlainObject(innerObj)) {
+            // If the inner property is an object or array, recurse into it
+            mixins.recurse(innerObj, enterArrays, onPrimitive, innerPath, origObj || obj);
+          } else {
+            // Otherwise, call onPrimitive
+            onPrimitive(innerPath, innerObj, origObj || obj);
+          }
+        });
+      } else {
+        // Call on primitive with full path to this property, the property itself, and the original object
+        onPrimitive(path, val, origObj || obj);
+      }
+    });
+  },
+
+  flattenObject: function flattenObject(obj) {
+    var result = {};
+    mixins.recurse(obj, true, function (path, val) {
+      result[path] = val;
+    });
+    return result;
+  },
+
+  unflattenObject: function unflattenObject(obj) {
+    return _(obj).keys().reduce(function (memo, k) {
+      _.set(memo, k, obj[k]);
+      return memo;
+    }, {});
+  }
+};
+
+_.mixin(mixins);
+
+module.exports = _;
+
+},{"lodash":undefined}],3:[function(require,module,exports){
+'use strict';
+
+var _ = require('./lodash');
 
 // There are only 5 characters in the spectrum of used characters that get
 // encoded by encodeURIComponent. For space and to not have to call
@@ -173,7 +288,7 @@ var revmap = {
 
 // Takes a regular object, flattens it, deconstructs it into
 // an array of objects with key and val, and sorts on key.
-// E.g. 
+// E.g.
 //  {
 //    foo: {
 //      banana: 1,
@@ -191,32 +306,31 @@ var revmap = {
 //      val: 1
 //    }
 //  ]
-var sort = exports.sort = function(obj) {
+var sort = exports.sort = function (obj) {
   // Flatten the object (get all nested keys as top level, dot delimited keys),
   // remove the "v" key, which represents the version, and then transform the
   // resulting object into an array of objects. Finally, sort the array by the
   // key name so we have a reliable order of values.
-  return _.chain(flatten(obj)).omit('v').reduce(function(memo, val, key) {
-    memo.push({
+  return _.chain(obj).flattenObject().omit('v').reduce(function (memo, val, key) {
+    return memo.concat({
       key: key,
       val: val
     });
-    return memo;
   }, []).sortBy('key').value();
 };
 
 // Basically the reverse of the above, except that sorting doesn't matter
 // since key order isnt' guaranteed.
-var construct = exports.construct = function(arr) {
-  return _.reduce(arr, function(memo, item) {
-    memo[ item.key ] = Number(item.val);
+var construct = exports.construct = function (arr) {
+  return _.reduce(arr, function (memo, item) {
+    memo[item.key] = Number(item.val);
     return memo;
   }, {});
 };
 
 // Convert 1 to 5 digits to printable character (between
 // 64 and 95).
-var getCode = exports.getCode = function(chunk) {
+var getCode = exports.getCode = function (chunk) {
   // Parse a chunk of 1 to 5 digits into binary.
   var bin = parseInt(chunk.join(''), 2);
   // Return the char code, shifted up by 64. This places the final
@@ -226,7 +340,7 @@ var getCode = exports.getCode = function(chunk) {
 };
 
 // Reverse the above. Convert a character back to a binary representation.
-var getBin = exports.getBin = function(chr) {
+var getBin = exports.getBin = function (chr) {
   // If this is a mapped char, use that char instead of the actual char.
   chr = revmap[chr] ? revmap[chr] : chr;
   // Get the charcode and shift down by 64
@@ -238,11 +352,11 @@ var getBin = exports.getBin = function(chr) {
 // Could probably be called "getBins" but that seemed too close to the method
 // above. This converts a series of characters to binary representations,
 // returning a single string of 1s and 0s.
-var getVals = exports.getVals = function(parts) {
+var getVals = exports.getVals = function (parts) {
   // parts 0 is the encoding and parts 1 is the number of significant digits
   // in the final character.
-  var letters = parts[0].split(''); 
-  return _.reduce(letters, function(memo, letter, i) {
+  var letters = parts[0].split('');
+  return _.reduce(letters, function (memo, letter, i) {
     // Get the binary representation of the letter
     var bin = getBin(letter);
     if (i === letters.length - 1) {
@@ -265,7 +379,7 @@ var getVals = exports.getVals = function(parts) {
 
 // Convert a config object into a series of 1 and 0 flags. Format of the return
 // value is [version]z[config representation]z[number of significant digits in last letter]
-exports.pack = function(config) {
+exports.pack = function (config) {
   // Sort the config and pluck out the vals
   var bits = _.map(sort(config), 'val');
   // Separate into chunks of 5. This helps ensure that all the characters fall in the
@@ -276,7 +390,7 @@ exports.pack = function(config) {
   // either in length once encoded or in complexity by having a much larger key map
   // (like the one at the top). Chunks of 5 shifted by 64 seems sufficient.
   var chunks = _.chunk(bits, 5);
-  return _.reduce(chunks, function(memo, chunk, i) {
+  return _.reduce(chunks, function (memo, chunk, i) {
     // Get the letter representation of this chunk
     var letter = getCode(chunk);
     // If there's a mapping for this letter, use that instead of the actual letter
@@ -294,7 +408,7 @@ exports.pack = function(config) {
 };
 
 // Reverse the above. Convert something like 2zYA_z5 to a configuration object.
-exports.unpack = function(str, config) {
+exports.unpack = function (str, config) {
   // Get an array of 1s and 0s from the string
   var bits = getVals(str.split('z').slice(1));
 
@@ -303,11 +417,11 @@ exports.unpack = function(str, config) {
   var sorted = sort(config);
 
   // Iterate over the bits
-  _.each(bits, function(bit, i) {
+  _.each(bits, function (bit, i) {
     // Safety check in case (for example) we forget to bump ftoggle
     // and make changes that cause the number of keys to be different
     if (sorted[i]) {
-      // Assign the value of this toggle based on the cookied bit
+      // Assign the value of this toggle based on the packed bit
       sorted[i].val = bit;
     }
   });
@@ -315,140 +429,10 @@ exports.unpack = function(str, config) {
   // Put our config array back into an object
   var unsorted = construct(sorted);
   // And return an unflattened version
-  var unflat = flatten.unflatten(unsorted);
+  var unflat = _.unflattenObject(unsorted);
   unflat.v = Number(str.split('z')[0]);
   return unflat;
 };
 
-},{"flat":3,"lodash":undefined}],3:[function(require,module,exports){
-var isBuffer = require('is-buffer')
-
-var flat = module.exports = flatten
-flatten.flatten = flatten
-flatten.unflatten = unflatten
-
-function flatten(target, opts) {
-  opts = opts || {}
-
-  var delimiter = opts.delimiter || '.'
-  var maxDepth = opts.maxDepth
-  var output = {}
-
-  function step(object, prev, currentDepth) {
-    currentDepth = currentDepth ? currentDepth : 1
-    Object.keys(object).forEach(function(key) {
-      var value = object[key]
-      var isarray = opts.safe && Array.isArray(value)
-      var type = Object.prototype.toString.call(value)
-      var isbuffer = isBuffer(value)
-      var isobject = (
-        type === "[object Object]" ||
-        type === "[object Array]"
-      )
-
-      var newKey = prev
-        ? prev + delimiter + key
-        : key
-
-      if (!isarray && !isbuffer && isobject && Object.keys(value).length &&
-        (!opts.maxDepth || currentDepth < maxDepth)) {
-        return step(value, newKey, currentDepth + 1)
-      }
-
-      output[newKey] = value
-    })
-  }
-
-  step(target)
-
-  return output
-}
-
-function unflatten(target, opts) {
-  opts = opts || {}
-
-  var delimiter = opts.delimiter || '.'
-  var overwrite = opts.overwrite || false
-  var result = {}
-
-  var isbuffer = isBuffer(target)
-  if (isbuffer || Object.prototype.toString.call(target) !== '[object Object]') {
-    return target
-  }
-
-  // safely ensure that the key is
-  // an integer.
-  function getkey(key) {
-    var parsedKey = Number(key)
-
-    return (
-      isNaN(parsedKey) ||
-      key.indexOf('.') !== -1
-    ) ? key
-      : parsedKey
-  }
-
-  Object.keys(target).forEach(function(key) {
-    var split = key.split(delimiter)
-    var key1 = getkey(split.shift())
-    var key2 = getkey(split[0])
-    var recipient = result
-
-    while (key2 !== undefined) {
-      var type = Object.prototype.toString.call(recipient[key1])
-      var isobject = (
-        type === "[object Object]" ||
-        type === "[object Array]"
-      )
-
-      // do not write over falsey, non-undefined values if overwrite is false
-      if (!overwrite && !isobject && typeof recipient[key1] !== 'undefined') {
-        return
-      }
-
-      if ((overwrite && !isobject) || (!overwrite && recipient[key1] == null)) {
-        recipient[key1] = (
-          typeof key2 === 'number' &&
-          !opts.object ? [] : {}
-        )
-      }
-
-      recipient = recipient[key1]
-      if (split.length > 0) {
-        key1 = getkey(split.shift())
-        key2 = getkey(split[0])
-      }
-    }
-
-    // unflatten again for 'messy objects'
-    recipient[key1] = unflatten(target[key], opts)
-  })
-
-  return result
-}
-
-},{"is-buffer":4}],4:[function(require,module,exports){
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * @license  MIT
- */
-
-// The _isBuffer check is for Safari 5-7 support, because it's missing
-// Object.prototype.constructor. Remove this eventually
-module.exports = function (obj) {
-  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
-}
-
-function isBuffer (obj) {
-  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
-}
-
-// For Node v0.10 support. Remove this eventually.
-function isSlowBuffer (obj) {
-  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
-}
-
-},{}]},{},[1])(1)
+},{"./lodash":2}]},{},[1])(1)
 });

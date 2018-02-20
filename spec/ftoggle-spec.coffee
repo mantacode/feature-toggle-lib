@@ -1,4 +1,5 @@
 clear = require 'clear-require'
+
 describe 'ftoggle', ->
   Given -> @packer = jasmine.createSpyObj 'packer', ['pack', 'unpack']
   Given -> @subject = require('proxyquire').noCallThru() '../lib/ftoggle',
@@ -9,13 +10,13 @@ describe 'ftoggle', ->
   afterEach -> clear('../lib/ftoggle')
 
   describe '.isFeatureEnabled', ->
-    Given -> @config =
+    Given -> @toggles =
       e: 1
       foo:
         e: 1
         bar:
           e: 1
-    Given -> @ftoggle = new @subject(@config)
+    Given -> @ftoggle = new @subject(@toggles)
 
     context 'enabled', ->
       Then -> expect(@ftoggle.isFeatureEnabled('foo.bar')).toBe true
@@ -24,7 +25,7 @@ describe 'ftoggle', ->
       Then -> expect(@ftoggle.isFeatureEnabled('foo.baz')).toBe false
 
   describe '.findEnabledChildren', ->
-    Given -> @config =
+    Given -> @toggles =
       e: 1
       foo:
         e: 1
@@ -34,7 +35,7 @@ describe 'ftoggle', ->
             e: 1
           quux:
             e: 1
-    Given -> @ftoggle = new @subject(@config)
+    Given -> @ftoggle = new @subject(@toggles)
     
     context 'with children', ->
       Then -> expect(@ftoggle.findEnabledChildren('foo.bar')).toEqual ['baz', 'quux']
@@ -46,18 +47,18 @@ describe 'ftoggle', ->
       Then -> expect(@ftoggle.findEnabledChildren('foo.banana')).toEqual []
 
   describe '.doesFeatureExist', ->
-    Given -> @config =
+    Given -> @toggles =
       e: 1
       foo:
         e: 1
-    Given -> @toggleConfig =
+    Given -> @featureConfig =
       features:
         foo:
           traffic: 1
           features:
             bar:
               traffic: 1
-    Given -> @ftoggle = new @subject(@config, {}, @toggleConfig)
+    Given -> @ftoggle = new @subject(@toggles, {}, @featureConfig)
 
     context 'feature exists', ->
       Then -> expect(@ftoggle.doesFeatureExist('foo.bar')).toBe true
@@ -65,31 +66,31 @@ describe 'ftoggle', ->
     context 'feature does not exist', ->
       Then -> expect(@ftoggle.doesFeatureExist('foo.quux')).toBe false
 
-  describe '.getFeatures', ->
-    Given -> @config =
+  describe '.getToggles', ->
+    Given -> @toggles =
       foo: 'bar'
-    Given -> @ftoggle = new @subject(@config)
-    Then -> expect(@ftoggle.getFeatures()).toEqual foo: 'bar'
+    Given -> @ftoggle = new @subject(@toggles)
+    Then -> expect(@ftoggle.getToggles()).toEqual foo: 'bar'
 
-  describe '.featureVal', ->
-    Given -> @featureVals =
+  describe '.getSetting', ->
+    Given -> @settings =
       foo: 'bar'
-    Given -> @ftoggle = new @subject({}, @featureVals)
+    Given -> @ftoggle = new @subject({}, @settings)
 
     context 'val exists', ->
-      Then -> expect(@ftoggle.featureVal('foo')).toBe 'bar'
+      Then -> expect(@ftoggle.getSetting('foo')).toBe 'bar'
 
     context 'val does not exist', ->
-      Then -> expect(@ftoggle.featureVal('banana')).toBe null
+      Then -> expect(@ftoggle.getSetting('banana')).toBe null
 
-  describe '.getFeatureVals', ->
-    Given -> @featureVals =
+  describe '.getSettings', ->
+    Given -> @settings =
       foo: 'bar'
-    Given -> @ftoggle = new @subject({}, @featureVals)
-    Then -> expect(@ftoggle.getFeatureVals()).toEqual foo: 'bar'
+    Given -> @ftoggle = new @subject({}, @settings)
+    Then -> expect(@ftoggle.getSettings()).toEqual foo: 'bar'
 
   describe '.enable', ->
-    Given -> @config =
+    Given -> @toggles =
       e: 1
       foo:
         e: 1
@@ -107,22 +108,21 @@ describe 'ftoggle', ->
         e: 0
         trunk:
           e: 0
-    Given -> @toggleConfig =
+    Given -> @featureConfig =
       name: 'test'
-      cookieOptions: 'blah'
       features:
         foo:
           traffic: 1
-          conf:
+          settings:
             banana: true
           features:
             bar:
               traffic: 1
-              conf:
+              settings:
                 apple: true
             baz:
               traffic: 0
-              conf:
+              settings:
                 apricot: true
         favoriteFruit:
           traffic: 1
@@ -130,30 +130,30 @@ describe 'ftoggle', ->
           features:
             banana:
               traffic: 0.5
-              conf:
+              settings:
                 yellow: true
             apple:
               traffic: 0.5
-              conf:
+              settings:
                 red: true
         tree:
-          conf:
+          settings:
             maple: true
           traffic: 1
           features:
             trunk:
-              conf:
+              settings:
                 bark: true
               traffic: 1
-    Given -> @featureVals =
+    Given -> @settings =
       banana: true
       apple: true
       red: true
-    Given -> @ftoggle = new @subject(@config, @featureVals, @toggleConfig)
+    Given -> @ftoggle = new @subject(@toggles, @settings, @featureConfig)
 
     context 'existing feature', ->
       When -> @ftoggle.enable 'foo.baz'
-      Then -> expect(@ftoggle.config).toEqual
+      Then -> expect(@ftoggle.toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -171,7 +171,7 @@ describe 'ftoggle', ->
           e: 0
           trunk:
             e: 0
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
         apple: true
         apricot: true
@@ -179,7 +179,7 @@ describe 'ftoggle', ->
 
     context 'non-existent feature', ->
       When -> @ftoggle.enable 'foo.quux'
-      Then -> expect(@config).toEqual
+      Then -> expect(@toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -197,14 +197,14 @@ describe 'ftoggle', ->
           e: 0
           trunk:
             e: 0
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
         apple: true
         red: true
 
     context 'exclusive split', ->
       When -> @ftoggle.enable 'favoriteFruit.banana'
-      Then -> expect(@ftoggle.config).toEqual
+      Then -> expect(@ftoggle.toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -222,14 +222,14 @@ describe 'ftoggle', ->
           e: 0
           trunk:
             e: 0
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
         apple: true
         yellow: true
 
     context 'completely new tree path', ->
       When -> @ftoggle.enable 'tree.trunk'
-      Then -> expect(@ftoggle.config).toEqual
+      Then -> expect(@ftoggle.toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -247,7 +247,7 @@ describe 'ftoggle', ->
           e: 1
           trunk:
             e: 1
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
         apple: true
         red: true
@@ -255,41 +255,40 @@ describe 'ftoggle', ->
         bark: true
 
   describe '.enableAll', ->
-    Given -> @config =
+    Given -> @toggles =
       e: 1
       foo:
         e: 1
         bar:
           e: 1
-    Given -> @toggleConfig =
+    Given -> @featureConfig =
       name: 'test'
-      cookieOptions: 'blah'
       features:
         foo:
           traffic: 1
-          conf:
+          settings:
             banana: true
           features:
             bar:
               traffic: 1
-              conf:
+              settings:
                 apple: true
             baz:
               traffic: 0
-              conf:
+              settings:
                 apricot: true
             quux:
               traffic: 0
-              conf:
+              settings:
                 plum: true
-    Given -> @featureVals =
+    Given -> @settings =
       banana: true
       apple: true
-    Given -> @ftoggle = new @subject(@config, @featureVals, @toggleConfig)
+    Given -> @ftoggle = new @subject(@toggles, @settings, @featureConfig)
 
     context 'with an array', ->
       When -> @ftoggle.enableAll(['foo.baz', 'foo.quux'])
-      Then -> expect(@ftoggle.config).toEqual
+      Then -> expect(@ftoggle.toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -299,7 +298,7 @@ describe 'ftoggle', ->
             e: 1
           quux:
             e: 1
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
         apple: true
         apricot: true
@@ -307,7 +306,7 @@ describe 'ftoggle', ->
 
     context 'with a comma-separated string', ->
       When -> @ftoggle.enableAll('foo.baz,foo.quux')
-      Then -> expect(@ftoggle.config).toEqual
+      Then -> expect(@ftoggle.toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -317,14 +316,14 @@ describe 'ftoggle', ->
             e: 1
           quux:
             e: 1
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
         apple: true
         apricot: true
         plum: true
 
   describe '.disable', ->
-    Given -> @config =
+    Given -> @toggles =
       e: 1
       foo:
         e: 1
@@ -336,41 +335,40 @@ describe 'ftoggle', ->
           e: 1
           limb:
             e: 1
-    Given -> @toggleConfig =
+    Given -> @featureConfig =
       name: 'test'
-      cookieOptions: 'blah'
       features:
         foo:
           traffic: 1
           features:
             bar:
               traffic: 1
-              conf:
+              settings:
                 banana: true
         tree:
           traffic: 1
-          conf:
+          settings:
             maple: true
           features:
             trunk:
               traffic: 1
-              conf:
+              settings:
                 trunk: true
               features:
                 limb:
                   traffic: 1
-                  conf:
+                  settings:
                     branches: true
-    Given -> @featureVals =
+    Given -> @settings =
       banana: true
       maple: true
       trunk: true
       branches: true
-    Given -> @ftoggle = new @subject(@config, @featureVals, @toggleConfig)
+    Given -> @ftoggle = new @subject(@toggles, @settings, @featureConfig)
 
     context 'existing feature', ->
       When -> @ftoggle.disable 'foo.bar'
-      Then -> expect(@ftoggle.config).toEqual
+      Then -> expect(@ftoggle.toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -382,14 +380,14 @@ describe 'ftoggle', ->
             e: 1
             limb:
               e: 1
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         maple: true
         trunk: true
         branches: true
 
     context 'non-existent feature', ->
       When -> @ftoggle.disable 'foo.quux'
-      Then -> expect(@config).toEqual
+      Then -> expect(@toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -401,7 +399,7 @@ describe 'ftoggle', ->
             e: 1
             limb:
               e: 1
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
         maple: true
         trunk: true
@@ -409,7 +407,7 @@ describe 'ftoggle', ->
 
     context 'whole tree', ->
       When -> @ftoggle.disable 'tree'
-      Then -> expect(@ftoggle.config).toEqual
+      Then -> expect(@ftoggle.toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -421,11 +419,11 @@ describe 'ftoggle', ->
             e: 0
             limb:
               e: 0
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
 
   describe '.disableAll', ->
-    Given -> @config =
+    Given -> @toggles =
       e: 1
       foo:
         e: 1
@@ -435,37 +433,36 @@ describe 'ftoggle', ->
           e: 1
         quux:
           e: 1
-    Given -> @toggleConfig =
+    Given -> @featureConfig =
       name: 'test'
-      cookieOptions: 'blah'
       features:
         foo:
           traffic: 1
-          conf:
+          settings:
             banana: true
           features:
             bar:
               traffic: 1
-              conf:
+              settings:
                 apple: true
             baz:
               traffic: 1
-              conf:
+              settings:
                 apricot: true
             quux:
               traffic: 1
-              conf:
+              settings:
                 plum: true
-    Given -> @featureVals =
+    Given -> @settings =
       banana: true
       apple: true
       apricot: true
       plum: true
-    Given -> @ftoggle = new @subject(@config, @featureVals, @toggleConfig)
+    Given -> @ftoggle = new @subject(@toggles, @settings, @featureConfig)
 
     context 'with an array', ->
       When -> @ftoggle.disableAll(['foo.baz', 'foo.quux'])
-      Then -> expect(@ftoggle.config).toEqual
+      Then -> expect(@ftoggle.toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -475,13 +472,13 @@ describe 'ftoggle', ->
             e: 0
           quux:
             e: 0
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
         apple: true
 
     context 'with a comma-separated string', ->
       When -> @ftoggle.disableAll('foo.baz,foo.quux')
-      Then -> expect(@ftoggle.config).toEqual
+      Then -> expect(@ftoggle.toggles).toEqual
         e: 1
         foo:
           e: 1
@@ -491,15 +488,15 @@ describe 'ftoggle', ->
             e: 0
           quux:
             e: 0
-      And -> expect(@ftoggle.featureVals).toEqual
+      And -> expect(@ftoggle.settings).toEqual
         banana: true
         apple: true
 
-  describe '.getPackedConfig', ->
+  describe '.serialize', ->
     Given -> @ftoggle = new @subject 'config'
-    When -> @ftoggle.getPackedConfig()
+    When -> @ftoggle.serialize()
     Then -> expect(@packer.pack).toHaveBeenCalledWith 'config'
 
-  describe '.getUnpackedConfig', ->
-    When -> @subject.getUnpackedConfig 'cookie', 'conf'
-    Then -> expect(@packer.unpack).toHaveBeenCalledWith 'cookie', 'conf'
+  describe '.deserialize', ->
+    When -> @subject.deserialize 'packed', 'settings'
+    Then -> expect(@packer.unpack).toHaveBeenCalledWith 'packed', 'settings'

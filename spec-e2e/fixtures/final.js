@@ -1,44 +1,39 @@
 module.exports = {
   version: 2,
-  cookieOptions: {
-    domain: '.0.0.1',
-    path: '/',
-    maxAge: 63072000000
-  },
   name: 'test',
-  conf: {
+  settings: {
     topEnabled: true
   },
   features: {
     foo: {
       traffic: 1,
-      conf: {
+      settings: {
         fooEnabled: true
       }
     },
     bar: {
       traffic: 0,
-      conf: {
+      settings: {
         barEnabled: true
       }
     },
     treatments: {
       exclusiveSplit: 1,
       traffic: 1,
-      conf: {
+      settings: {
         treatmentsEnabled: true,
         topOfSplitEnabled: true
       },
       features: {
         treatment_a: {
           traffic: 0.5,
-          conf: {
+          settings: {
             treatmentAEnabled: true
           }
         },
         treatment_b: {
           traffic: 0.5,
-          conf: {
+          settings: {
             treatmentBEnabled: true,
             topOfSplitEnabled: false
           }
@@ -48,27 +43,27 @@ module.exports = {
     fruits: {
       exclusiveSplit: 1,
       traffic: 0,
-      conf: {
+      settings: {
         fruitsEnabled: true
       },
       features: {
         banana: {
           exclusiveSplit: true,
           traffic: 0.5,
-          conf: {
+          settings: {
             bananaEnabled: true
           },
           features: {
             yellow_banana: {
               traffic: 0.5,
-              conf: {
+              settings: {
                 yelloBananaEnabled: true,
                 greenBananaEnabled: false
               }
             },
             green_banana: {
               traffic: 0.5,
-              conf: {
+              settings: {
                 greenBananaEnabled: true,
                 yellowBananaEnabled: false
               }
@@ -78,20 +73,20 @@ module.exports = {
         apple: {
           exclusiveSplit: true,
           traffic: 0.5,
-          conf: { 
+          settings: { 
             appleEnabled: true
           },
           features: {
             green_apple: {
               traffic: 0.5,
-              conf: {
+              settings: {
                 greenAppleEnabled: true,
                 redAppleEnabled: false
               }
             },
             red_apple: {
               traffic: 0.5,
-              conf: {
+              settings: {
                 redAppleEnabled: true,
                 greenAppleEnabled: false
               }
